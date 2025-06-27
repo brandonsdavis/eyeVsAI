@@ -1,0 +1,135 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pipenv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Dataset downloads - EXCLUDE ALL IMAGE DATASETS FROM GIT
+data/downloads/
+*/data/downloads/
+downloads/
+*/downloads/
+dataset_cache/
+*/dataset_cache/
+
+# ML Models Core datasets
+ml_models_core/data/
+ml_models_core/dataset_cache/
+ml_models_core/downloads/
+
+# Combined and unified datasets
+**/combined_*/
+**/unified_*/
+**/pets_vs_*/
+**/oxford_pets/
+**/kaggle_vegetables/
+**/street_foods/
+**/musical_instruments/
+
+# Any dataset directories in project subfolders
+**/datasets/
+**/data/raw/
+**/data/processed/
+**/data/external/
+
+# Image file patterns (just in case)
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.tif
+*.gif
+*.webp
+
+# Archive files that might contain datasets
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Model artifacts
+*.h5
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+models/*.h5
+models/*.pkl
+models/*.joblib
+models/*.pt
+models/*.pth
+*/models/*.h5
+*/models/*.pkl
+*/models/*.joblib
+*/models/*.pt
+*/models/*.pth
+
+# Logs and temporary files
+*.log
+logs/
+*/logs/
+wandb/
+*/wandb/
+mlruns/
+*/mlruns/
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Node.js (for React frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

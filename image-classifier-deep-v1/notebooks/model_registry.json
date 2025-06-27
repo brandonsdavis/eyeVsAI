@@ -1,0 +1,70 @@
+{
+  "deep-learning-v1": [
+    {
+      "name": "deep-learning-v1",
+      "version": "1.0.0",
+      "model_type": "deep_v1",
+      "accuracy": 0.48679440704298294,
+      "training_date": "2024-01-01",
+      "model_path": "../models/deep_v1_classifier.pth",
+      "config": {
+        "architecture": "Custom CNN",
+        "num_classes": 70,
+        "input_size": "64x64x3",
+        "epochs_trained": 20,
+        "optimizer": "Adam",
+        "learning_rate": 0.001
+      },
+      "performance_metrics": {
+        "test_accuracy": 0.48679440704298294,
+        "best_val_accuracy": 0.48808290155440415,
+        "final_train_loss": 1.5335949208213888,
+        "final_val_loss": 1.825500710813467
+      }
+    },
+    {
+      "name": "deep-learning-v1",
+      "version": "1.0.0",
+      "model_type": "deep_v1",
+      "accuracy": 0.47591921284308647,
+      "training_date": "2024-01-01",
+      "model_path": "../models/deep_v1_classifier.pth",
+      "config": {
+        "architecture": "Custom CNN",
+        "num_classes": 70,
+        "input_size": "64x64x3",
+        "epochs_trained": 30,
+        "optimizer": "Adam",
+        "learning_rate": 0.001
+      },
+      "performance_metrics": {
+        "test_accuracy": 0.47591921284308647,
+        "best_val_accuracy": 0.4937823834196891,
+        "final_train_loss": 1.4161343776555642,
+        "final_val_loss": 1.8207740160551937
+      }
+    },
+    {
+      "name": "deep-learning-v1",
+      "version": "1.0.0",
+      "model_type": "deep_v1",
+      "accuracy": 0.4821336095287416,
+      "training_date": "2024-01-01",
+      "model_path": "../models/deep_v1_classifier.pth",
+      "config": {
+        "architecture": "Custom CNN",
+        "num_classes": 70,
+        "input_size": "64x64x3",
+        "epochs_trained": 30,
+        "optimizer": "Adam",
+        "learning_rate": 0.001
+      },
+      "performance_metrics": {
+        "test_accuracy": 0.4821336095287416,
+        "best_val_accuracy": 0.49015544041450776,
+        "final_train_loss": 1.4419723326322138,
+        "final_val_loss": 1.8155694931499229
+      }
+    }
+  ]
+}

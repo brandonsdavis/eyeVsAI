@@ -1,0 +1,58 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://download.pytorch.org/whl/nightly/cu128"
+verify_ssl = true
+name = "pytorch"
+
+[packages]
+# Core ML and data processing
+numpy = ">=1.21.0"
+pandas = ">=1.5.0"
+pillow = ">=8.0.0"
+scikit-learn = ">=1.0.0"
+matplotlib = ">=3.5.0"
+seaborn = ">=0.11.0"
+opencv-python = ">=4.5.0"
+tqdm = "*"
+
+# PyTorch ecosystem (nightly with CUDA 12.8)
+torch = {version = "*", index = "pytorch", pre = true}
+torchvision = {version = "*", index = "pytorch", pre = true}
+torchaudio = {version = "*", index = "pytorch", pre = true}
+
+# TensorFlow ecosystem (lighter version)
+tensorflow-cpu = ">=2.12.0"
+
+# Jupyter and development
+jupyter = "*"
+ipykernel = "*"
+notebook = "*"
+
+# API and web framework  
+fastapi = ">=0.68.0"
+uvicorn = "*"
+pydantic = ">=2.0.0"
+
+# Data management and utilities
+kagglehub = "*"
+requests = "*"
+typing-extensions = ">=4.0.0"
+
+# Model utilities
+joblib = "*"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pytest-asyncio = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+pre-commit = "*"
+
+[requires]
+python_version = "3.11"

@@ -1,0 +1,62 @@
+{
+  "deep-learning-v2": [
+    {
+      "name": "deep-learning-v2",
+      "version": "2.0.0",
+      "model_type": "deep_v2",
+      "accuracy": 0.1993785603314345,
+      "training_date": "2024-01-01",
+      "model_path": "../models/deep_v2_classifier.pth",
+      "config": {
+        "architecture": "Advanced CNN with ResNet + Attention",
+        "num_classes": 70,
+        "input_size": "96x96x3",
+        "epochs_trained": 25,
+        "optimizer": "AdamW",
+        "learning_rate_schedule": "StepLR",
+        "techniques": [
+          "mixup",
+          "label_smoothing",
+          "attention",
+          "residual_connections"
+        ]
+      },
+      "performance_metrics": {
+        "test_accuracy": 0.1993785603314345,
+        "best_val_accuracy": 0.216580310880829,
+        "final_train_loss": 3.0058223777041566,
+        "final_val_loss": 2.977163449791837,
+        "model_parameters": 11676335
+      }
+    },
+    {
+      "name": "deep-learning-v2",
+      "version": "2.0.0",
+      "model_type": "deep_v2",
+      "accuracy": 0.20921802175038842,
+      "training_date": "2024-01-01",
+      "model_path": "../models/deep_v2_classifier.pth",
+      "config": {
+        "architecture": "Advanced CNN with ResNet + Attention",
+        "num_classes": 70,
+        "input_size": "96x96x3",
+        "epochs_trained": 25,
+        "optimizer": "AdamW",
+        "learning_rate_schedule": "StepLR",
+        "techniques": [
+          "mixup",
+          "label_smoothing",
+          "attention",
+          "residual_connections"
+        ]
+      },
+      "performance_metrics": {
+        "test_accuracy": 0.20921802175038842,
+        "best_val_accuracy": 0.22953367875647668,
+        "final_train_loss": 3.0273740882882,
+        "final_val_loss": 2.941766677316555,
+        "model_parameters": 11676335
+      }
+    }
+  ]
+}

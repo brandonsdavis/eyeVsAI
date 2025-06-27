@@ -1,0 +1,32 @@
+# Core ML and data processing (without scikit-learn for now)
+numpy>=1.21.0
+pandas>=1.5.0
+pillow>=8.0.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+opencv-python>=4.5.0
+tqdm
+
+# TensorFlow
+tensorflow-cpu>=2.12.0
+
+# Jupyter 
+jupyter
+ipykernel
+notebook
+
+# API framework
+fastapi>=0.68.0
+uvicorn
+pydantic>=2.0.0
+
+# Data management
+kagglehub
+requests
+typing-extensions>=4.0.0
+
+# Model utilities
+joblib
+
+# Add scikit-learn separately after PyTorch
+scikit-learn>=1.0.0

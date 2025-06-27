@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(source:*)",
+      "Bash(export:*)",
+      "Bash(python:*)",
+      "Bash(find:*)"
+    ],
+    "deny": []
+  }
+}
