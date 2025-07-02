@@ -1,0 +1,35 @@
+{
+  "transfer_learning_classifier": [
+    {
+      "name": "transfer_learning_classifier",
+      "version": "1.0.0",
+      "model_type": "transfer_learning",
+      "accuracy": 0.16122765839099884,
+      "training_date": "2025-07-02T12:09:30.044406",
+      "model_path": "../models/transfer_learning_classifier.h5",
+      "config": {
+        "base_model": "resnet50",
+        "input_shape": [
+          224,
+          224,
+          3
+        ],
+        "num_classes": 70,
+        "batch_size": 32,
+        "epochs": 20,
+        "fine_tune_epochs": 10,
+        "learning_rate": 0.001,
+        "fine_tune_learning_rate": 1e-05,
+        "dropout_rate": 0.5,
+        "l2_regularization": 0.0001,
+        "validation_split": 0.2
+      },
+      "performance_metrics": {
+        "validation_accuracy": 0.16122765839099884,
+        "validation_loss": 3.232710123062134,
+        "mean_confidence": 0.75,
+        "std_confidence": 0.15
+      }
+    }
+  ]
+}
