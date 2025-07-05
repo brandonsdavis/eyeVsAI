@@ -8,7 +8,16 @@
       "Bash(source:*)",
       "Bash(export:*)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(jupyter nbconvert:*)",
+      "Bash(ls:*)",
+      "Bash(pip install:*)",
+      "Bash(cp:*)",
+      "Bash(CUDA_VISIBLE_DEVICES=\"\" python scripts/train.py --data_path /home/brandond/Projects/pvt/personal/eyeVsAI/data/downloads/combined_unified_classification --num_epochs 2 --batch_size 8 --base_model resnet50 --class_weights)",
+      "Bash(timeout 600 python scripts/production_trainer.py --model_type shallow --variation svm_hog_lbp --dataset vegetables)",
+      "Bash(timeout 300 python:*)",
+      "Bash(timeout:*)",
+      "Bash(ln:*)"
     ],
     "deny": []
   }

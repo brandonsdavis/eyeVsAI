@@ -1,0 +1,152 @@
+{
+  "version": "1.0",
+  "created_at": "2025-07-05T12:20:10.970214",
+  "last_updated": "2025-07-05T12:20:14.887777",
+  "total_models": 1,
+  "models": {
+    "model_854782873f37": {
+      "model_id": "model_854782873f37",
+      "registered_at": "2025-07-05T12:20:14.886351",
+      "session_id": "demo_session",
+      "model_type": "transfer",
+      "variation": "resnet50",
+      "dataset": "vegetables",
+      "version": "v20250705_a19a260f",
+      "metrics": {
+        "best_validation_accuracy": 0.0,
+        "final_train_accuracy": 0.0,
+        "final_validation_accuracy": 0.0,
+        "total_epochs": 0
+      },
+      "best_validation_accuracy": 0.0,
+      "training_time_seconds": 3.8435516357421875,
+      "hyperparameters": {
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "head_dropout_rate": 0.5,
+        "optimizer": "adamw",
+        "weight_decay": 0.0001,
+        "dense_units": [
+          512,
+          256
+        ],
+        "num_epochs": 30,
+        "base_model": "resnet50",
+        "freeze_base_epochs": 10,
+        "fine_tune_epochs": 15,
+        "dataset_path": "/home/brandond/Projects/pvt/personal/eyeVsAI/data/downloads/vegetables",
+        "num_classes": 15,
+        "model_type": "transfer",
+        "variation": "resnet50",
+        "dataset": "vegetables"
+      },
+      "final_hyperparameters": {
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "head_dropout_rate": 0.5,
+        "optimizer": "adamw",
+        "weight_decay": 0.0001,
+        "dense_units": [
+          512,
+          256
+        ],
+        "num_epochs": 30,
+        "base_model": "resnet50",
+        "freeze_base_epochs": 10,
+        "fine_tune_epochs": 15,
+        "dataset_path": "/home/brandond/Projects/pvt/personal/eyeVsAI/data/downloads/vegetables",
+        "num_classes": 15,
+        "model_type": "transfer",
+        "variation": "resnet50",
+        "dataset": "vegetables"
+      },
+      "tuning_results": null,
+      "model_path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f",
+      "config_path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/config.json",
+      "log_path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/training.log",
+      "checkpoint_path": "",
+      "model_files": {
+        "config": [
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/config.json",
+            "size_mb": 0.0004425048828125,
+            "modified": "2025-07-05T12:20:10.970588",
+            "exists": true
+          },
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/config.json",
+            "size_mb": 0.0004425048828125,
+            "modified": "2025-07-05T12:20:10.970588",
+            "exists": true
+          },
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/training_results.json",
+            "size_mb": 0.002361297607421875,
+            "modified": "2025-07-05T12:20:14.886290",
+            "exists": true
+          }
+        ],
+        "logs": [
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/training.log",
+            "size_mb": 0.0066375732421875,
+            "modified": "2025-07-05T12:20:14.068119",
+            "exists": true
+          },
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/logs/training_pytorch_20250705_120239.log",
+            "size_mb": 0.00229644775390625,
+            "modified": "2025-07-05T12:02:39.891005",
+            "exists": true
+          },
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/logs/training_pytorch_20250705_122013.log",
+            "size_mb": 0.00229644775390625,
+            "modified": "2025-07-05T12:20:14.068119",
+            "exists": true
+          }
+        ],
+        "results": [
+          {
+            "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/production_training/models/demo/transfer/resnet50/vegetables/v20250705_a19a260f/training_results.json",
+            "size_mb": 0.002361297607421875,
+            "modified": "2025-07-05T12:20:14.886290",
+            "exists": true
+          }
+        ]
+      },
+      "gpu_used": null,
+      "cuda_version": null,
+      "pytorch_version": null,
+      "training_status": "completed",
+      "export_status": "pending",
+      "production_ready": false,
+      "notes": "",
+      "tags": []
+    }
+  },
+  "sessions": {},
+  "statistics": {
+    "by_model_type": {
+      "transfer": {
+        "count": 1,
+        "avg_accuracy": 0.0,
+        "best_accuracy": 0.0
+      }
+    },
+    "by_dataset": {
+      "vegetables": {
+        "count": 1,
+        "avg_accuracy": 0.0,
+        "best_accuracy": 0.0,
+        "best_model": null
+      }
+    },
+    "best_models": {
+      "overall_best": "model_854782873f37",
+      "top_10": [
+        "model_854782873f37"
+      ]
+    }
+  }
+}

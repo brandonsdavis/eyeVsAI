@@ -122,6 +122,14 @@ wandb/
 mlruns/
 */mlruns/
 
+# Production training system
+production_training/models/*/
+production_training/logs/
+production_training/results/
+production_training/exports/
+production_training/*_registry.json
+production_training/test_registry.json
+
 # Environment files
 .env.local
 .env.development.local

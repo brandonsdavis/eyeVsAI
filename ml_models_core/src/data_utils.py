@@ -26,7 +26,12 @@ from collections import Counter
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-import seaborn as sns
+try:
+    import seaborn as sns
+    SEABORN_AVAILABLE = True
+except ImportError:
+    sns = None
+    SEABORN_AVAILABLE = False
 
 
 def verify_dataset_integrity(dataset_path: str, 

@@ -31,8 +31,14 @@ import logging
 
 import numpy as np
 import pandas as pd
-import kagglehub
-from kagglehub import KaggleDatasetAdapter
+try:
+    import kagglehub
+    from kagglehub import KaggleDatasetAdapter
+    KAGGLEHUB_AVAILABLE = True
+except ImportError:
+    kagglehub = None
+    KaggleDatasetAdapter = None
+    KAGGLEHUB_AVAILABLE = False
 import requests
 from PIL import Image
 from sklearn.model_selection import train_test_split
@@ -76,6 +82,9 @@ class DatasetDownloader:
         
     def download_kaggle_dataset(self, dataset_id: str, target_dir: str) -> str:
         """Download dataset from Kaggle using kagglehub."""
+        if not KAGGLEHUB_AVAILABLE:
+            raise ImportError("kagglehub is not available. Install it with: pip install kagglehub")
+        
         logger.info(f"Downloading Kaggle dataset: {dataset_id}")
         try:
             download_path = kagglehub.dataset_download(dataset_id)
@@ -175,6 +184,9 @@ class DatasetDownloader:
         try:
             # Load the dataset using pandas adapter
             # Set empty file_path to get the whole dataset
+            if not KAGGLEHUB_AVAILABLE:
+                raise ImportError("kagglehub is not available. Install it with: pip install kagglehub")
+            
             df = kagglehub.load_dataset(
                 KaggleDatasetAdapter.PANDAS,
                 dataset_id,

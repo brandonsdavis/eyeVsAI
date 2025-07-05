@@ -1,0 +1,170 @@
+{
+  "model_types": {
+    "shallow": {
+      "name": "Shallow Learning",
+      "module_path": "image-classifier-shallow",
+      "variations": {
+        "svm_hog_lbp": {
+          "name": "SVM with HOG+LBP features",
+          "config": {
+            "classifier_type": "svm",
+            "feature_types": ["hog", "lbp"],
+            "use_pca": true,
+            "pca_components": 100
+          }
+        },
+        "rf_hog_lbp": {
+          "name": "Random Forest with HOG+LBP features",
+          "config": {
+            "classifier_type": "random_forest",
+            "feature_types": ["hog", "lbp"],
+            "use_pca": true,
+            "pca_components": 100
+          }
+        }
+      },
+      "hyperparameter_space": {
+        "C": [0.1, 1.0, 10.0, 100.0],
+        "kernel": ["linear", "rbf", "poly"],
+        "n_estimators": [100, 200, 500],
+        "max_depth": [10, 20, 30, null],
+        "pca_components": [50, 100, 150, 200]
+      }
+    },
+    "deep_v1": {
+      "name": "Deep Learning V1",
+      "module_path": "image-classifier-deep-v1",
+      "variations": {
+        "standard": {
+          "name": "Standard CNN Architecture",
+          "config": {
+            "use_residual": false,
+            "architecture": "standard"
+          }
+        },
+        "residual": {
+          "name": "ResNet-style Architecture",
+          "config": {
+            "use_residual": true,
+            "architecture": "residual"
+          }
+        }
+      },
+      "hyperparameter_space": {
+        "learning_rate": [0.001, 0.01, 0.1],
+        "batch_size": [32, 64, 128],
+        "dropout_rate": [0.3, 0.4, 0.5],
+        "optimizer": ["adam", "adamw", "sgd"],
+        "weight_decay": [1e-5, 1e-4, 1e-3]
+      }
+    },
+    "deep_v2": {
+      "name": "Deep Learning V2",
+      "module_path": "image-classifier-deep-v2",
+      "variations": {
+        "resnet": {
+          "name": "ResNet Architecture",
+          "config": {
+            "architecture": "resnet",
+            "use_cbam": true,
+            "use_se": true
+          }
+        },
+        "densenet": {
+          "name": "DenseNet Architecture",
+          "config": {
+            "architecture": "densenet",
+            "use_cbam": true,
+            "use_se": false
+          }
+        },
+        "hybrid": {
+          "name": "Hybrid Architecture",
+          "config": {
+            "architecture": "hybrid",
+            "use_cbam": true,
+            "use_se": true
+          }
+        }
+      },
+      "hyperparameter_space": {
+        "learning_rate": [0.01, 0.1, 0.3],
+        "batch_size": [32, 64, 128],
+        "dropout_rates": [[0.3, 0.2, 0.1], [0.4, 0.3, 0.2], [0.5, 0.3, 0.2]],
+        "optimizer": ["sgd", "adam", "adamw"],
+        "weight_decay": [1e-5, 5e-4, 1e-3],
+        "mixup_alpha": [0.2, 0.3, 0.4]
+      }
+    },
+    "transfer": {
+      "name": "Transfer Learning",
+      "module_path": "image-classifier-transfer",
+      "variations": {
+        "resnet50": {
+          "name": "ResNet50",
+          "config": {
+            "base_model": "resnet50",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "resnet101": {
+          "name": "ResNet101",
+          "config": {
+            "base_model": "resnet101",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "efficientnet_b0": {
+          "name": "EfficientNet-B0",
+          "config": {
+            "base_model": "efficientnet_b0",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "efficientnet_b1": {
+          "name": "EfficientNet-B1",
+          "config": {
+            "base_model": "efficientnet_b1",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "vgg16": {
+          "name": "VGG16",
+          "config": {
+            "base_model": "vgg16",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "mobilenet_v2": {
+          "name": "MobileNetV2",
+          "config": {
+            "base_model": "mobilenet_v2",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        },
+        "densenet121": {
+          "name": "DenseNet121",
+          "config": {
+            "base_model": "densenet121",
+            "freeze_base_epochs": 10,
+            "fine_tune_epochs": 15
+          }
+        }
+      },
+      "hyperparameter_space": {
+        "learning_rate": [0.0001, 0.001, 0.01],
+        "batch_size": [16, 32, 64],
+        "head_dropout_rate": [0.3, 0.4, 0.5],
+        "optimizer": ["adam", "adamw", "sgd"],
+        "weight_decay": [0.0, 1e-4, 1e-3],
+        "dense_units": [[512, 256], [1024, 512], [2048, 1024]]
+      }
+    }
+  }
+}

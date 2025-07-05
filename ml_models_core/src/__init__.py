@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from .base_classifier import BaseImageClassifier
+from .base_trainer import BaseTrainer
+from .config import BaseConfig, ShallowLearningConfig, DeepLearningConfig, TransferLearningConfig
 from .model_registry import ModelRegistry, ModelMetadata
 from .data_manager import UnifiedDatasetManager, get_dataset_manager, create_combined_classification_dataset, create_three_class_classification_dataset, create_four_class_classification_dataset
 from .data_loaders import get_main_classification_data, get_pets_data, get_vegetables_data, get_street_foods_data, get_musical_instruments_data, get_unified_classification_data, get_three_class_data, get_four_class_data
@@ -21,7 +23,12 @@ from .utils import ModelUtils
 
 __version__ = "0.1.0"
 __all__ = [
-    "BaseImageClassifier", 
+    "BaseImageClassifier",
+    "BaseTrainer",
+    "BaseConfig",
+    "ShallowLearningConfig",
+    "DeepLearningConfig", 
+    "TransferLearningConfig",
     "ModelRegistry", 
     "ModelMetadata",
     "UnifiedDatasetManager",
