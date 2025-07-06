@@ -312,32 +312,47 @@ class ProductionPipeline:
             for dataset in df['dataset'].unique():
                 dataset_df = df[df['dataset'] == dataset]
                 if len(dataset_df) > 0 and 'best_validation_accuracy' in dataset_df.columns:
-                    best_idx = dataset_df['best_validation_accuracy'].idxmax()
-                    best = dataset_df.loc[best_idx]
-                    summary["best_by_dataset"][dataset] = {
-                        "model": f"{best['model_type']}/{best['variation']}",
-                        "accuracy": float(best['best_validation_accuracy'])
-                    }
+                    # Handle NaN values by dropping them before finding idxmax
+                    valid_results = dataset_df.dropna(subset=['best_validation_accuracy'])
+                    if len(valid_results) > 0:
+                        best_idx = valid_results['best_validation_accuracy'].idxmax()
+                        best = valid_results.loc[best_idx]
+                        summary["best_by_dataset"][dataset] = {
+                            "model": f"{best['model_type']}/{best['variation']}",
+                            "accuracy": float(best['best_validation_accuracy'])
+                        }
             
             # Best by model type
             for model_type in df['model_type'].unique():
                 model_df = df[df['model_type'] == model_type]
                 if len(model_df) > 0 and 'best_validation_accuracy' in model_df.columns:
-                    best_idx = model_df['best_validation_accuracy'].idxmax()
-                    best = model_df.loc[best_idx]
-                    summary["best_by_model_type"][model_type] = {
-                        "variation": best['variation'],
-                        "dataset": best['dataset'],
-                        "accuracy": float(best['best_validation_accuracy'])
-                    }
+                    # Handle NaN values by dropping them before finding idxmax
+                    valid_results = model_df.dropna(subset=['best_validation_accuracy'])
+                    if len(valid_results) > 0:
+                        best_idx = valid_results['best_validation_accuracy'].idxmax()
+                        best = valid_results.loc[best_idx]
+                        summary["best_by_model_type"][model_type] = {
+                            "variation": best['variation'],
+                            "dataset": best['dataset'],
+                            "accuracy": float(best['best_validation_accuracy'])
+                        }
             
-            # Summary statistics
-            summary["summary_statistics"] = {
-                "mean_accuracy": float(df['best_validation_accuracy'].mean()),
-                "std_accuracy": float(df['best_validation_accuracy'].std()),
-                "min_accuracy": float(df['best_validation_accuracy'].min()),
-                "max_accuracy": float(df['best_validation_accuracy'].max())
-            }
+            # Summary statistics (handle NaN values)
+            valid_accuracies = df['best_validation_accuracy'].dropna()
+            if len(valid_accuracies) > 0:
+                summary["summary_statistics"] = {
+                    "mean_accuracy": float(valid_accuracies.mean()),
+                    "std_accuracy": float(valid_accuracies.std()),
+                    "min_accuracy": float(valid_accuracies.min()),
+                    "max_accuracy": float(valid_accuracies.max())
+                }
+            else:
+                summary["summary_statistics"] = {
+                    "mean_accuracy": 0.0,
+                    "std_accuracy": 0.0,
+                    "min_accuracy": 0.0,
+                    "max_accuracy": 0.0
+                }
         
         # Save summary
         summary_file = self.results_dir / f"summary_report_{datetime.now().strftime('%Y%m%d')}.json"
@@ -371,6 +386,8 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train all production models with automated pipeline'
     )
+    parser.add_argument('--generate_reports_only', action='store_true',
+                       help='Generate reports from existing results without training')
     parser.add_argument('--base_dir', type=str,
                        default='/home/brandond/Projects/pvt/personal/eyeVsAI/production_training',
                        help='Base directory for production training')
@@ -394,6 +411,11 @@ def main():
         base_dir=args.base_dir,
         parallel_jobs=args.parallel_jobs
     )
+    
+    if args.generate_reports_only:
+        # Only generate reports from existing results
+        pipeline.generate_reports()
+        return
     
     # Run pipeline
     results = pipeline.run_pipeline(
