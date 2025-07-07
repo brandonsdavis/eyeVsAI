@@ -1,0 +1,54 @@
+{
+  "datasets": {
+    "combined": {
+      "name": "Combined Multi-Domain Dataset",
+      "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/models/data/downloads/combined_unified_classification",
+      "description": "Combined dataset with pets, vegetables, instruments, and street foods (~67 classes)",
+      "num_classes": 67,
+      "domains": ["pets", "vegetables", "instruments", "street_foods"],
+      "image_size": [128, 128],
+      "validation_split": 0.2,
+      "test_split": 0.1
+    },
+    "vegetables": {
+      "name": "Kaggle Vegetables Dataset",
+      "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/models/data/downloads/vegetables",
+      "description": "Kaggle vegetables classification dataset",
+      "num_classes": 15,
+      "domains": ["vegetables"],
+      "image_size": [128, 128],
+      "validation_split": 0.2,
+      "test_split": 0.1
+    },
+    "pets": {
+      "name": "Oxford Pets Dataset",
+      "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/models/data/downloads/oxford_pets",
+      "description": "Oxford-IIIT Pet Dataset with cat and dog breeds",
+      "num_classes": 37,
+      "domains": ["pets"],
+      "image_size": [128, 128],
+      "validation_split": 0.2,
+      "test_split": 0.1
+    },
+    "street_foods": {
+      "name": "Street Foods Dataset",
+      "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/models/data/downloads/street_foods",
+      "description": "Street foods classification dataset",
+      "num_classes": 10,
+      "domains": ["street_foods"],
+      "image_size": [128, 128],
+      "validation_split": 0.2,
+      "test_split": 0.1
+    },
+    "instruments": {
+      "name": "Musical Instruments Dataset",
+      "path": "/home/brandond/Projects/pvt/personal/eyeVsAI/models/data/downloads/musical_instruments",
+      "description": "Musical instruments classification dataset",
+      "num_classes": 30,
+      "domains": ["instruments"],
+      "image_size": [128, 128],
+      "validation_split": 0.2,
+      "test_split": 0.1
+    }
+  }
+}

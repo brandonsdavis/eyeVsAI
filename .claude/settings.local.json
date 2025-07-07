@@ -17,7 +17,11 @@
       "Bash(timeout 600 python scripts/production_trainer.py --model_type shallow --variation svm_hog_lbp --dataset vegetables)",
       "Bash(timeout 300 python:*)",
       "Bash(timeout:*)",
-      "Bash(ln:*)"
+      "Bash(ln:*)",
+      "Bash(mv:*)",
+      "Bash(# Create missing __init__.py files\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/shallow/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/deep-v1/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/deep-v2/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/transfer/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/core/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/core/src/__init__.py\n\necho \"Created missing __init__.py files\")",
+      "Bash(docker-compose config:*)",
+      "Bash(docker compose:*)"
     ],
     "deny": []
   }

@@ -51,6 +51,10 @@ Thumbs.db
 .ipynb_checkpoints
 
 # Dataset downloads - EXCLUDE ALL IMAGE DATASETS FROM GIT
+models/data/downloads/
+models/data/dataset_cache/
+models/*/data/downloads/
+models/*/data/dataset_cache/
 data/downloads/
 */data/downloads/
 downloads/
@@ -58,10 +62,10 @@ downloads/
 dataset_cache/
 */dataset_cache/
 
-# ML Models Core datasets
-ml_models_core/data/
-ml_models_core/dataset_cache/
-ml_models_core/downloads/
+# Models Core datasets (new structure)
+models/core/data/
+models/core/dataset_cache/
+models/core/downloads/
 
 # Combined and unified datasets
 **/combined_*/
@@ -102,33 +106,32 @@ ml_models_core/downloads/
 *.pt
 *.pth
 *.onnx
-models/*.h5
-models/*.pkl
-models/*.joblib
-models/*.pt
-models/*.pth
-*/models/*.h5
-*/models/*.pkl
-*/models/*.joblib
-*/models/*.pt
-*/models/*.pth
+models/classifiers/*/models/*.h5
+models/classifiers/*/models/*.pkl
+models/classifiers/*/models/*.joblib
+models/classifiers/*/models/*.pt
+models/classifiers/*/models/*.pth
+models/production/models/
+models/production/logs/
+models/production/results/
+models/production/exports/
+models/production/*_registry.json
+models/production/test_registry.json
 
 # Logs and temporary files
 *.log
 logs/
-*/logs/
+models/*/logs/
+models/classifiers/*/logs/
 wandb/
 */wandb/
 mlruns/
 */mlruns/
 
-# Production training system
-production_training/models/*/
-production_training/logs/
-production_training/results/
-production_training/exports/
-production_training/*_registry.json
-production_training/test_registry.json
+# Checkpoints and training artifacts
+models/checkpoints/
+models/*/checkpoints/
+models/classifiers/*/checkpoints/
 
 # Environment files
 .env.local

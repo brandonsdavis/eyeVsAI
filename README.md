@@ -16,62 +16,99 @@ This project is a **production-ready modular system** for training image recogni
 
 ```
 eyeVsAI/
-├── image-classifier-shallow/      # Traditional ML with feature extraction
-│   ├── src/                      # Extracted production modules
-│   │   ├── config.py             # Configuration dataclass
-│   │   ├── feature_extractor.py  # HOG, LBP, color features
-│   │   ├── classifier.py         # BaseImageClassifier implementation
-│   │   ├── trainer.py            # Training and evaluation
-│   │   └── __init__.py           # Package exports
-│   ├── scripts/                  # CLI training scripts
-│   │   └── train.py              # Command-line interface
-│   └── notebooks/                # Updated notebooks using extracted modules
+├── models/                        # 🧠 ML Models and Training
+│   ├── classifiers/               # Model implementations
+│   │   ├── shallow/               # Traditional ML with feature extraction
+│   │   │   ├── src/               # Extracted production modules
+│   │   │   │   ├── config.py      # Configuration dataclass
+│   │   │   │   ├── feature_extractor.py  # HOG, LBP, color features
+│   │   │   │   ├── classifier.py  # BaseImageClassifier implementation
+│   │   │   │   ├── trainer.py     # Training and evaluation
+│   │   │   │   └── __init__.py    # Package exports
+│   │   │   ├── scripts/           # CLI training scripts
+│   │   │   │   └── train.py       # Command-line interface
+│   │   │   └── notebooks/         # Updated notebooks using extracted modules
+│   │   │
+│   │   ├── deep-v1/               # Basic CNN implementation
+│   │   │   ├── src/               # PyTorch-based modules
+│   │   │   │   ├── config.py      # Deep learning configuration
+│   │   │   │   ├── model.py       # CNN architecture
+│   │   │   │   ├── data_loader.py # Memory-efficient data loading
+│   │   │   │   ├── trainer.py     # Training with GPU optimization
+│   │   │   │   ├── classifier.py  # Prediction interface
+│   │   │   │   └── __init__.py    # Package exports
+│   │   │   └── scripts/train.py   # CLI with GPU/CPU support
+│   │   │
+│   │   ├── deep-v2/               # Advanced CNN with attention
+│   │   │   ├── src/               # Advanced PyTorch implementation
+│   │   │   │   ├── config.py      # Advanced training configuration
+│   │   │   │   ├── model.py       # ResNet + Attention mechanisms
+│   │   │   │   ├── data_loader.py # Lazy loading with mixup
+│   │   │   │   ├── trainer.py     # Memory-efficient training
+│   │   │   │   ├── classifier.py  # Advanced prediction interface
+│   │   │   │   └── __init__.py    # Package exports
+│   │   │   └── scripts/train.py   # CLI with memory optimization
+│   │   │
+│   │   └── transfer/              # Transfer learning with pre-trained models
+│   │       ├── src/               # TensorFlow/Keras modules
+│   │       │   ├── config.py      # Transfer learning configuration
+│   │       │   ├── models.py      # Pre-trained model integration
+│   │       │   ├── data_loader.py # TensorFlow data pipeline
+│   │       │   ├── trainer.py     # Two-phase training
+│   │       │   ├── classifier.py  # Transfer learning interface
+│   │       │   └── __init__.py    # Package exports
+│   │       └── scripts/train.py   # CLI with model selection
+│   │
+│   ├── core/                      # Core infrastructure
+│   │   └── src/                   # Base classes and utilities
+│   │       ├── base_classifier.py # BaseImageClassifier interface
+│   │       ├── base_trainer.py    # BaseTrainer interface
+│   │       ├── base_config.py     # Configuration base classes
+│   │       ├── model_registry.py  # Model metadata management
+│   │       └── utils.py           # Utility functions
+│   │
+│   ├── production/                # Production training pipeline
+│   │   ├── configs/               # Model and dataset configurations
+│   │   │   ├── models.json        # Model type definitions
+│   │   │   └── datasets.json      # Dataset configurations
+│   │   ├── scripts/               # Training automation scripts
+│   │   │   ├── production_trainer.py        # Individual model training
+│   │   │   ├── hyperparameter_tuner.py      # Automated hyperparameter tuning
+│   │   │   └── train_all_production_models.py # Master training pipeline
+│   │   ├── models/                # Trained model outputs
+│   │   ├── logs/                  # Training logs
+│   │   └── results/               # Training results and reports
+│   │
+│   ├── data/                      # Training datasets
+│   │   └── downloads/             # Downloaded dataset storage
+│   │
+│   └── checkpoints/               # Model checkpoints
 │
-├── image-classifier-deep-v1/      # Basic CNN implementation
-│   ├── src/                      # PyTorch-based modules
-│   │   ├── config.py             # Deep learning configuration
-│   │   ├── model.py              # CNN architecture
-│   │   ├── data_loader.py        # Memory-efficient data loading
-│   │   ├── trainer.py            # Training with GPU optimization
-│   │   ├── classifier.py         # Prediction interface
-│   │   └── __init__.py           # Package exports
-│   └── scripts/train.py          # CLI with GPU/CPU support
+├── backend/                       # 🔧 Backend Services
+│   ├── api/                       # Classification API server
+│   │   ├── src/                   # API implementation
+│   │   ├── Dockerfile             # Container configuration
+│   │   └── requirements.txt       # Python dependencies
+│   │
+│   └── deploy/                    # Deployment configuration
+│       └── nginx.conf             # Nginx configuration
 │
-├── image-classifier-deep-v2/      # Advanced CNN with attention
-│   ├── src/                      # Advanced PyTorch implementation
-│   │   ├── config.py             # Advanced training configuration
-│   │   ├── model.py              # ResNet + Attention mechanisms
-│   │   ├── data_loader.py        # Lazy loading with mixup
-│   │   ├── trainer.py            # Memory-efficient training
-│   │   ├── classifier.py         # Advanced prediction interface
-│   │   └── __init__.py           # Package exports
-│   └── scripts/train.py          # CLI with memory optimization
+├── frontend/                      # 🎮 Frontend Game
+│   └── game/                      # Classification game interface
+│       ├── src/                   # React game implementation
+│       ├── Dockerfile             # Container configuration
+│       └── package.json           # Node.js dependencies
 │
-├── image-classifier-transfer/     # Transfer learning with pre-trained models
-│   ├── src/                      # TensorFlow/Keras modules
-│   │   ├── config.py             # Transfer learning configuration
-│   │   ├── models.py             # Pre-trained model integration
-│   │   ├── data_loader.py        # TensorFlow data pipeline
-│   │   ├── trainer.py            # Two-phase training
-│   │   ├── classifier.py         # Transfer learning interface
-│   │   └── __init__.py           # Package exports
-│   └── scripts/train.py          # CLI with model selection
-│
-├── ml_models_core/                # Core infrastructure
-│   └── src/                      # Base classes and utilities
-│       ├── base_classifier.py    # BaseImageClassifier interface
-│       ├── base_trainer.py       # BaseTrainer interface
-│       ├── base_config.py        # Configuration base classes
-│       ├── model_registry.py     # Model metadata management
-│       └── utils.py              # Utility functions
+├── docs/                          # 📚 Documentation
+│   ├── CLI_USAGE.md              # Complete CLI documentation
+│   ├── TESTING_SUMMARY.md        # Testing framework guide
+│   └── PROJECT_COMPLETION_SUMMARY.md # Implementation overview
 │
 ├── train_models.py               # 🎯 UNIFIED CLI LAUNCHER
 ├── test_models.py                # Comprehensive testing suite
 ├── test_structure.py             # Structural validation tests
 ├── test_configs.py               # Configuration testing
-├── CLI_USAGE.md                  # Complete CLI documentation
-├── TESTING_SUMMARY.md            # Testing framework guide
-├── PROJECT_COMPLETION_SUMMARY.md # Implementation overview
+├── docker-compose.yml            # Multi-service deployment
 └── README.md                     # This file
 ```
 
@@ -152,10 +189,10 @@ python train_models.py install transfer
 
 ```bash
 # Train shallow learning classifier
-python train_models.py shallow --data_path /path/to/dataset --epochs 100
+python models/classifiers/shallow/scripts/train.py --data_path /path/to/dataset --epochs 100
 
 # Train advanced deep learning model with memory optimization
-python train_models.py deep-v2 \
+python models/classifiers/deep-v2/scripts/train.py \
     --data_path /path/to/dataset \
     --epochs 25 \
     --batch_size 8 \
@@ -163,7 +200,7 @@ python train_models.py deep-v2 \
     --mixup_prob 0.3
 
 # Train transfer learning model with ResNet50
-python train_models.py transfer \
+python models/classifiers/transfer/scripts/train.py \
     --data_path /path/to/dataset \
     --base_model resnet50 \
     --fine_tune_layers 10 \
@@ -256,10 +293,10 @@ results = trainer.train("/path/to/data")
 
 ```python
 # Load any trained model with consistent interface
-from image_classifier_deep_v2.src.classifier import DeepLearningV2Classifier
+from models.classifiers.deep_v2.src.classifier import DeepLearningV2Classifier
 
 classifier = DeepLearningV2Classifier()
-classifier.load_model("models/trained_model.pth")
+classifier.load_model("models/production/models/trained_model.pth")
 
 # Make predictions
 predictions = classifier.predict(image_array)
@@ -336,7 +373,7 @@ class DeepLearningV2Config(DeepLearningConfig):
 ### Model Registry Integration
 
 ```python
-from ml_models_core.src.model_registry import ModelRegistry, ModelMetadata
+from models.core.src.model_registry import ModelRegistry, ModelMetadata
 
 registry = ModelRegistry()
 metadata = ModelMetadata(
@@ -376,7 +413,14 @@ def load_classifier(model_type: str, model_path: str) -> BaseImageClassifier:
 
 ```bash
 # Production training pipeline
-python train_models.py transfer \
+python models/production/scripts/train_all_production_models.py \
+    --models transfer \
+    --datasets combined \
+    --run_tuning \
+    --parallel_jobs 2
+
+# Individual model training
+python models/classifiers/transfer/scripts/train.py \
     --data_path /production/dataset \
     --base_model resnet50 \
     --epochs 20 \
@@ -459,13 +503,13 @@ python train_models.py transfer --help
 ### Model-Specific Optimal Configurations
 ```bash
 # Shallow Learning (Traditional ML)
-python train_models.py shallow --data_path /data --feature_types hog lbp color_histogram
+python models/classifiers/shallow/scripts/train.py --data_path /data --feature_types hog lbp color_histogram
 
 # Deep Learning v2 (Advanced CNN)  
-python train_models.py deep-v2 --data_path /data --batch_size 8 --accumulation_steps 4 --memory_efficient
+python models/classifiers/deep-v2/scripts/train.py --data_path /data --batch_size 8 --accumulation_steps 4 --memory_efficient
 
 # Transfer Learning (Pre-trained)
-python train_models.py transfer --data_path /data --base_model resnet50 --mixed_precision --fine_tune_layers 10
+python models/classifiers/transfer/scripts/train.py --data_path /data --base_model resnet50 --mixed_precision --fine_tune_layers 10
 ```
 
 This production-ready system provides a solid foundation for scalable ML development, deployment, and maintenance for enterprise use.
