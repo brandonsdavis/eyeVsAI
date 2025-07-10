@@ -14,14 +14,37 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { AppBar, Toolbar, Typography, Button, Box, Menu, MenuItem, Avatar, IconButton, Chip } from '@mui/material';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const isActive = (path) => location.pathname === path;
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleMenuClose();
+    navigate('/');
+  };
+
+  const handleProfile = () => {
+    navigate('/profile');
+    handleMenuClose();
+  };
 
   return (
     <AppBar position="static">
@@ -29,7 +52,7 @@ const Header = () => {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           AI Image Classification Game
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Button
             color="inherit"
             component={Link}
@@ -74,6 +97,42 @@ const Header = () => {
           >
             Leaderboard
           </Button>
+          
+          {isAuthenticated ? (
+            <>
+              <Chip
+                avatar={<Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>{user?.display_name?.[0] || 'U'}</Avatar>}
+                label={user?.display_name || 'User'}
+                variant="outlined"
+                sx={{ 
+                  color: 'white', 
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  '&:hover': { borderColor: 'rgba(255,255,255,0.5)' }
+                }}
+                onClick={handleMenuClick}
+              />
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
+                <MenuItem onClick={handleProfile}>Profile Settings</MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Button
+              color="inherit"
+              component={Link}
+              to="/auth"
+              sx={{ 
+                textDecoration: 'none',
+                backgroundColor: isActive('/auth') ? 'rgba(255,255,255,0.1)' : 'transparent'
+              }}
+            >
+              Login
+            </Button>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

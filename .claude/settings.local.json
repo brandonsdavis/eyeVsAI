@@ -21,7 +21,12 @@
       "Bash(mv:*)",
       "Bash(# Create missing __init__.py files\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/shallow/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/deep-v1/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/deep-v2/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/classifiers/transfer/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/core/__init__.py\ntouch /home/brandond/Projects/pvt/personal/eyeVsAI/models/core/src/__init__.py\n\necho \"Created missing __init__.py files\")",
       "Bash(docker-compose config:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(claude --version)",
+      "Bash(code:*)",
+      "Bash(curl:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose up:*)"
     ],
     "deny": []
   }

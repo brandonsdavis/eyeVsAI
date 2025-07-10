@@ -21,9 +21,12 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
-import GamePage from './pages/GamePage';
+import GamePage from './components/game/GamePage';
 import UploadPage from './pages/UploadPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import ProfilePage from './pages/ProfilePage';
+import AuthPage from './components/auth/AuthPage';
+import { AuthProvider } from './contexts/AuthContext';
 
 const theme = createTheme({
   palette: {
@@ -40,17 +43,21 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <div className="App">
-          <Header />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/game" element={<GamePage />} />
-            <Route path="/upload" element={<UploadPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-          </Routes>
-        </div>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <Header />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/game" element={<GamePage />} />
+              <Route path="/upload" element={<UploadPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

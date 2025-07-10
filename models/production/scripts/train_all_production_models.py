@@ -35,6 +35,7 @@ from typing import List, Dict, Any
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 import time
 from tqdm import tqdm
 
@@ -399,6 +400,192 @@ class ProductionPipeline:
             json.dump(summary, f, indent=2)
         
         self.logger.info(f"Saved summary report to: {summary_file}")
+        
+        # Generate game backend report
+        self._generate_game_backend_report(df)
+    
+    def _generate_game_backend_report(self, df: pd.DataFrame):
+        """Generate a JSON report specifically for the game backend."""
+        # Load model descriptions from config
+        with open(self.config_dir / "models.json", 'r') as f:
+            models_config = json.load(f)
+        
+        # Load dataset descriptions
+        with open(self.config_dir / "datasets.json", 'r') as f:
+            datasets_config = json.load(f)
+        
+        # Load class names from dataset configs
+        dataset_configs_path = self.base_dir.parent / "data" / "downloads" / "dataset_configs.json"
+        class_names_config = {}
+        if dataset_configs_path.exists():
+            with open(dataset_configs_path, 'r') as f:
+                class_names_config = json.load(f)
+        
+        game_report = {
+            "report_generated": datetime.now().isoformat(),
+            "version": "1.0",
+            "datasets": {},
+            "model_descriptions": {}
+        }
+        
+        # Add model descriptions from config
+        for model_type, model_info in models_config["model_types"].items():
+            for variation_key, variation_info in model_info["variations"].items():
+                full_model_key = f"{model_type}/{variation_key}"
+                game_report["model_descriptions"][full_model_key] = {
+                    "name": variation_info["name"],
+                    "technical_description": variation_info.get("technical_description", ""),
+                    "simple_description": variation_info.get("simple_description", ""),
+                    "model_type": model_type,
+                    "variation": variation_key
+                }
+        
+        # Process each dataset
+        for dataset_name in df['dataset'].unique():
+            dataset_df = df[df['dataset'] == dataset_name]
+            
+            # Get dataset info
+            dataset_info = datasets_config["datasets"].get(dataset_name, {})
+            
+            # Filter valid results (non-zero accuracy)
+            valid_results = dataset_df[
+                (dataset_df['best_validation_accuracy'] > 0) & 
+                (dataset_df['best_validation_accuracy'].notna())
+            ].copy()
+            
+            if len(valid_results) == 0:
+                continue
+            
+            # Add model key for easier processing
+            valid_results['model_key'] = valid_results['model_type'] + '/' + valid_results['variation']
+            
+            # Categorize models by difficulty based on accuracy
+            accuracy_values = valid_results['best_validation_accuracy'].values
+            
+            # Define difficulty levels based on performance terciles
+            if len(accuracy_values) >= 3:
+                # Use terciles for difficulty levels
+                low_threshold = np.percentile(accuracy_values, 33)
+                high_threshold = np.percentile(accuracy_values, 67)
+            else:
+                # Fallback for fewer models
+                low_threshold = np.percentile(accuracy_values, 40)
+                high_threshold = np.percentile(accuracy_values, 60)
+            
+            # Categorize models
+            easy_models = valid_results[valid_results['best_validation_accuracy'] <= low_threshold]
+            medium_models = valid_results[
+                (valid_results['best_validation_accuracy'] > low_threshold) & 
+                (valid_results['best_validation_accuracy'] <= high_threshold)
+            ]
+            hard_models = valid_results[valid_results['best_validation_accuracy'] > high_threshold]
+            
+            # Helper function to determine model format based on model type
+            def get_model_format(model_type: str) -> str:
+                """Determine model format based on model type."""
+                format_mapping = {
+                    "shallow": "sklearn",
+                    "deep_v1": "pytorch", 
+                    "deep_v2": "pytorch",
+                    "transfer": "pytorch"  # Based on current training implementation
+                }
+                return format_mapping.get(model_type, "unknown")
+            
+            # Helper function to select top models from each difficulty
+            def select_top_models(models_df, max_count=3):
+                if len(models_df) == 0:
+                    return []
+                
+                # Sort by accuracy (best first) and take top models
+                sorted_models = models_df.nlargest(max_count, 'best_validation_accuracy')
+                
+                result = []
+                for _, model in sorted_models.iterrows():
+                    result.append({
+                        "model_key": model['model_key'],
+                        "name": f"{model['model_type']} - {model['variation']}",
+                        "accuracy": float(model['best_validation_accuracy']),
+                        "model_path": model.get('model_path', ''),
+                        "version": model.get('version', 'unknown'),
+                        "training_time": float(model.get('training_duration', 0)),
+                        "model_format": get_model_format(model['model_type'])
+                    })
+                return result
+            
+            # Get class names for this dataset
+            class_names = []
+            
+            # Map dataset names to config keys
+            dataset_name_mapping = {
+                "pets": "oxford_pets",
+                "vegetables": "vegetables", 
+                "street_foods": "street_foods",
+                "instruments": "musical_instruments",
+                "combined": "combined_unified_classification"
+            }
+            
+            config_key = dataset_name_mapping.get(dataset_name, dataset_name)
+            if config_key in class_names_config:
+                class_names = class_names_config[config_key].get("class_names", [])
+            
+            # Fallback: extract class names from dataset directory structure if not found in config
+            if not class_names:
+                dataset_path = Path(dataset_info.get("path", ""))
+                if dataset_path.exists():
+                    # Check for train subdirectory first
+                    train_path = dataset_path / "train"
+                    if train_path.exists():
+                        class_names = [d.name for d in train_path.iterdir() if d.is_dir() and not d.name.startswith('.')]
+                    else:
+                        # Check root directory for class folders
+                        class_names = [d.name for d in dataset_path.iterdir() if d.is_dir() and not d.name.startswith('.')]
+                    class_names.sort()  # Sort alphabetically for consistency
+            
+            # Build dataset entry
+            dataset_entry = {
+                "name": dataset_info.get("name", dataset_name.title()),
+                "description": dataset_info.get("description", ""),
+                "num_classes": dataset_info.get("num_classes", 0),
+                "class_names": class_names,
+                "domains": dataset_info.get("domains", []),
+                "difficulty_levels": {
+                    "easy": {
+                        "description": "Beginner-friendly AI opponents with lower accuracy",
+                        "accuracy_range": [0.0, float(low_threshold)],
+                        "models": select_top_models(easy_models)
+                    },
+                    "medium": {
+                        "description": "Moderately challenging AI opponents with balanced performance",
+                        "accuracy_range": [float(low_threshold), float(high_threshold)],
+                        "models": select_top_models(medium_models)
+                    },
+                    "hard": {
+                        "description": "Expert-level AI opponents with high accuracy",
+                        "accuracy_range": [float(high_threshold), 1.0],
+                        "models": select_top_models(hard_models)
+                    }
+                },
+                "total_models_available": len(valid_results),
+                "best_model": {
+                    "model_key": valid_results.loc[valid_results['best_validation_accuracy'].idxmax(), 'model_key'],
+                    "accuracy": float(valid_results['best_validation_accuracy'].max())
+                }
+            }
+            
+            game_report["datasets"][dataset_name] = dataset_entry
+        
+        # Save game backend report
+        game_report_file = self.results_dir / f"game_backend_report_{datetime.now().strftime('%Y%m%d')}.json"
+        with open(game_report_file, 'w') as f:
+            json.dump(game_report, f, indent=2)
+        
+        self.logger.info(f"Saved game backend report to: {game_report_file}")
+        
+        # Print summary for user
+        print(f"\n🎮 Game Backend Report Generated")
+        print(f"📊 Available datasets: {len(game_report['datasets'])}")
+        for dataset_name, dataset_info in game_report["datasets"].items():
+            print(f"  {dataset_name}: {dataset_info['total_models_available']} models across 3 difficulty levels")
     
     def _get_training_env(self):
         """Get environment variables for training subprocess."""
@@ -411,26 +598,6 @@ class ProductionPipeline:
         else:
             env['PYTHONPATH'] = project_root
         return env
-        
-        # Print summary to console
-        print("\n" + "="*80)
-        print("PRODUCTION TRAINING SUMMARY")
-        print("="*80)
-        print(f"Total models trained: {summary['total_models_trained']}")
-        
-        if summary["best_overall_model"]:
-            print(f"\nBest overall model: {summary['best_overall_model']['model']} "
-                  f"on {summary['best_overall_model']['dataset']} "
-                  f"(accuracy: {summary['best_overall_model']['accuracy']:.4f})")
-        
-        print("\nBest models by dataset:")
-        for dataset, info in summary["best_by_dataset"].items():
-            print(f"  {dataset}: {info['model']} (accuracy: {info['accuracy']:.4f})")
-        
-        print("\nBest models by type:")
-        for model_type, info in summary["best_by_model_type"].items():
-            print(f"  {model_type}: {info['variation']} on {info['dataset']} "
-                  f"(accuracy: {info['accuracy']:.4f})")
     
     def _update_progress_display(self, result: Dict[str, Any], pbar: tqdm, total_combinations: int):
         """Update progress display with timing statistics."""

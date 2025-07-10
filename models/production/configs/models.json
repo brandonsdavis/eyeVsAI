@@ -6,6 +6,8 @@
       "variations": {
         "svm_hog_lbp": {
           "name": "SVM with HOG+LBP features",
+          "technical_description": "Support Vector Machine classifier using Histogram of Oriented Gradients (HOG) and Local Binary Patterns (LBP) feature extraction. HOG captures edge orientations and gradients in 8x8 pixel blocks, while LBP encodes local texture patterns by comparing pixel intensities with neighbors. Features are reduced to 100 components using Principal Component Analysis (PCA) for dimensionality reduction before SVM classification with RBF, linear, or polynomial kernels.",
+          "simple_description": "Think of this AI like a detective with a magnifying glass. It looks at pictures and notices two main things: the direction of edges (like how a cat's whiskers point) and texture patterns (like how fur looks bumpy or smooth). It's like having a very methodical person who carefully examines every detail and then makes a decision based on a rulebook.",
           "config": {
             "classifier_type": "svm",
             "feature_types": ["hog", "lbp"],
@@ -15,6 +17,8 @@
         },
         "rf_hog_lbp": {
           "name": "Random Forest with HOG+LBP features",
+          "technical_description": "Random Forest ensemble classifier combining multiple decision trees with HOG and LBP feature extraction. Uses the same feature extraction as SVM variant but employs bootstrap aggregating (bagging) with 100-500 decision trees, each trained on random subsets of features and samples. Final prediction is determined by majority voting across all trees, providing robust classification with built-in feature importance ranking.",
+          "simple_description": "Imagine this AI as a council of wise advisors, each looking at pictures through a different lens. Like the detective AI, they all notice edges and textures, but instead of one person making the final decision, hundreds of advisors each give their opinion and then vote. It's like asking a whole room of experts and going with whatever most of them agree on.",
           "config": {
             "classifier_type": "random_forest",
             "feature_types": ["hog", "lbp"],
@@ -37,6 +41,8 @@
       "variations": {
         "standard": {
           "name": "Standard CNN Architecture",
+          "technical_description": "Classic Convolutional Neural Network with 6 convolutional layers using 3x3 kernels, batch normalization, and ReLU activation. Architecture follows: Conv(32) → Conv(64) → Pool → Conv(128) → Conv(256) → Pool → Conv(512) → Conv(512) → Pool → Flatten → Dense(512) → Dropout → Dense(output). Uses standard forward propagation without skip connections, trained end-to-end with backpropagation and adaptive learning rate scheduling.",
+          "simple_description": "Picture this AI as an artist who looks at images layer by layer. It starts by noticing simple things like lines and curves, then gradually builds up to recognize more complex shapes like eyes or wheels. It's like learning to draw - first you learn basic strokes, then you combine them to make objects, and finally you can recognize whole pictures.",
           "config": {
             "use_residual": false,
             "architecture": "standard"
@@ -44,6 +50,8 @@
         },
         "residual": {
           "name": "ResNet-style Architecture",
+          "technical_description": "Deep Convolutional Neural Network with residual skip connections inspired by ResNet architecture. Uses the same 6-layer structure as standard CNN but adds identity shortcuts that allow gradients to flow directly to earlier layers. Skip connections help prevent vanishing gradient problem in deep networks, enabling more effective training and better feature learning through residual blocks with pre-activation batch normalization.",
+          "simple_description": "This AI is like the artist from before, but with a better memory. While it's learning to recognize complex shapes, it can remember what it learned about simple lines and curves. It's like having notes that remind you of earlier lessons while you're learning something new, making the whole learning process more effective.",
           "config": {
             "use_residual": true,
             "architecture": "residual"
@@ -64,6 +72,8 @@
       "variations": {
         "resnet": {
           "name": "ResNet Architecture",
+          "technical_description": "Advanced ResNet architecture with Convolutional Block Attention Module (CBAM) and Squeeze-and-Excitation (SE) blocks. Features residual connections, channel attention (SE) that adaptively recalibrates channel-wise feature responses, and spatial attention (CBAM) that focuses on 'where' and 'what' is important. Includes mixup data augmentation, progressive learning rate scheduling, and memory-efficient training with gradient accumulation.",
+          "simple_description": "Think of this AI as a skilled photographer with a smart camera. Not only does it look at pictures layer by layer like the previous artist, but it also has a smart focus system. It can decide which parts of the image are most important to pay attention to, like how a photographer focuses on a subject while blurring the background.",
           "config": {
             "architecture": "resnet",
             "use_cbam": true,
@@ -72,6 +82,8 @@
         },
         "densenet": {
           "name": "DenseNet Architecture",
+          "technical_description": "DenseNet-inspired architecture where each layer receives input from all previous layers, creating dense connectivity patterns. Features concatenation-based skip connections (instead of addition like ResNet), transition blocks for downsampling, and CBAM attention modules for spatial focus. This dense connectivity promotes feature reuse and helps alleviate vanishing gradient problem while requiring fewer parameters.",
+          "simple_description": "Imagine this AI as a team of artists working on the same canvas, where each artist can see and build upon everything the previous artists have drawn. Unlike other AIs that might forget earlier details, this one keeps all the previous work visible and accessible, creating richer and more detailed understanding of images.",
           "config": {
             "architecture": "densenet",
             "use_cbam": true,
@@ -80,6 +92,8 @@
         },
         "hybrid": {
           "name": "Hybrid Architecture",
+          "technical_description": "Hybrid architecture combining ResNet residual blocks with DenseNet dense connectivity patterns. Early layers use dense connections for feature reuse, while deeper layers employ residual connections for gradient flow. Integrates both CBAM spatial attention and SE channel attention modules. This combination aims to leverage the strengths of both architectures while mitigating their individual weaknesses.",
+          "simple_description": "This AI is like having both the photographer with the smart camera and the collaborative artist team working together. In the beginning, it works like the team of artists who can see each other's work, but as it gets deeper into understanding the image, it switches to the photographer's focused approach. It's the best of both worlds combined into one system.",
           "config": {
             "architecture": "hybrid",
             "use_cbam": true,
@@ -102,6 +116,8 @@
       "variations": {
         "resnet50": {
           "name": "ResNet50",
+          "technical_description": "Transfer learning using pre-trained ResNet50 backbone trained on ImageNet. Features 50 layers with bottleneck residual blocks, pre-trained weights frozen for initial 10 epochs, followed by 15 epochs of fine-tuning with lower learning rate. Custom classification head with dense layers [512, 256] and dropout for target domain adaptation. Uses progressive unfreezing strategy for optimal knowledge transfer.",
+          "simple_description": "Think of this AI as an experienced art teacher who has studied millions of pictures before. Instead of starting from scratch, it uses all its previous knowledge about recognizing objects, shapes, and patterns. It's like having a teacher who already knows what cars, animals, and objects look like, and just needs to learn the specific things in your pictures.",
           "config": {
             "base_model": "resnet50",
             "freeze_base_epochs": 10,
@@ -110,6 +126,8 @@
         },
         "resnet101": {
           "name": "ResNet101",
+          "technical_description": "Transfer learning using deeper ResNet101 architecture with 101 layers and enhanced feature extraction capabilities. Contains more residual blocks than ResNet50, providing richer feature representations at the cost of increased computational requirements. Uses identical transfer learning strategy with frozen pre-training followed by fine-tuning, but benefits from deeper feature hierarchy for complex image understanding tasks.",
+          "simple_description": "This is like the experienced art teacher's older, wiser colleague who has even more experience and knowledge. While it takes longer to think through problems, it can notice more subtle details and patterns that the regular teacher might miss. It's like the difference between a good teacher and a master teacher who has decades more experience.",
           "config": {
             "base_model": "resnet101",
             "freeze_base_epochs": 10,
@@ -118,6 +136,8 @@
         },
         "efficientnet_b0": {
           "name": "EfficientNet-B0",
+          "technical_description": "Transfer learning using EfficientNet-B0 architecture optimized for efficiency through compound scaling of depth, width, and resolution. Features mobile inverted bottleneck convolutions (MBConv) with squeeze-and-excitation blocks, achieving strong performance with fewer parameters. Uses swish activation and progressive resizing during training for optimal accuracy-efficiency trade-off.",
+          "simple_description": "Imagine this AI as a brilliant student who learns very efficiently. Instead of needing tons of time and resources like some other AIs, this one figures out the smartest way to look at pictures. It's like having a student who finds the perfect balance between studying hard and studying smart, getting great results without wasting energy.",
           "config": {
             "base_model": "efficientnet_b0",
             "freeze_base_epochs": 10,
@@ -126,6 +146,8 @@
         },
         "efficientnet_b1": {
           "name": "EfficientNet-B1",
+          "technical_description": "Scaled-up version of EfficientNet-B0 with increased depth (16 vs 13 blocks), width (16 vs 12 channels), and resolution (240x240 vs 224x224). Maintains the same efficient architecture principles with MBConv blocks and SE attention but provides enhanced capacity for more complex feature learning. Offers improved accuracy over B0 while maintaining computational efficiency compared to traditional architectures.",
+          "simple_description": "This is like the brilliant student's older sibling who has a bit more experience and can handle more complex problems. While still being efficient and smart about learning, this one can spend a little more time on each picture to notice finer details. It's like the difference between a smart high school student and a smart college student.",
           "config": {
             "base_model": "efficientnet_b1",
             "freeze_base_epochs": 10,
@@ -134,6 +156,8 @@
         },
         "vgg16": {
           "name": "VGG16",
+          "technical_description": "Transfer learning using VGG16 architecture with 16 trainable layers arranged in 5 convolutional blocks. Features simple yet effective design with small 3x3 convolution filters, max pooling, and deep stacking. Despite being an older architecture, VGG16's straightforward design and strong feature extraction capabilities make it excellent for transfer learning, particularly on datasets with clear visual hierarchies.",
+          "simple_description": "Think of this AI as a methodical, old-school detective who takes a very systematic approach. It looks at images in a step-by-step manner, carefully examining every detail in order. While it might not have all the fancy tricks of newer AIs, its thorough and reliable method often produces solid results, especially with clear, well-defined objects.",
           "config": {
             "base_model": "vgg16",
             "freeze_base_epochs": 10,
@@ -142,6 +166,8 @@
         },
         "mobilenet_v2": {
           "name": "MobileNetV2",
+          "technical_description": "Transfer learning using MobileNetV2 architecture designed for mobile and edge devices. Features depthwise separable convolutions and inverted residual blocks with linear bottlenecks, significantly reducing computational cost while maintaining accuracy. Uses expansion-compression pattern in residual blocks and skip connections only between bottleneck layers, making it ideal for resource-constrained environments.",
+          "simple_description": "Picture this AI as a skilled artist who works with minimal supplies but creates beautiful results. It's designed to work quickly and efficiently, like sketching with just a few pencils instead of a full paint set. Despite using fewer resources, it's surprisingly good at recognizing images, making it perfect for situations where speed and efficiency matter most.",
           "config": {
             "base_model": "mobilenet_v2",
             "freeze_base_epochs": 10,
@@ -150,6 +176,8 @@
         },
         "densenet121": {
           "name": "DenseNet121",
+          "technical_description": "Transfer learning using DenseNet121 architecture with 121 layers and dense connectivity patterns. Each layer receives feature maps from all previous layers, promoting feature reuse and gradient flow. Features transition blocks for downsampling and growth rate control for managing feature map explosion. Requires fewer parameters than ResNet while achieving competitive accuracy through efficient feature sharing.",
+          "simple_description": "Imagine this AI as a research team where every member can see and use all the work done by previous team members. Instead of forgetting earlier discoveries, each step builds on everything learned before. It's like having a perfect memory system where nothing gets lost and every insight contributes to the final answer.",
           "config": {
             "base_model": "densenet121",
             "freeze_base_epochs": 10,

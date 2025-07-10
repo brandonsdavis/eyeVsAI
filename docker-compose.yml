@@ -1,18 +1,18 @@
-version: '3.8'
-
 services:
   api:
     build:
-      context: ./backend/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/api/Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./models:/app/models
       - ./models/data:/app/data
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app/models:/app
       - MODEL_PATH=/app/models
+      - DATABASE_URL=sqlite:///./eyevsai_dev.db
+      - SECRET_KEY=eyevsai-dev-secret-key-not-for-production-use-only-local-testing-12345
     depends_on:
       - redis
     restart: unless-stopped

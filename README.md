@@ -1,16 +1,23 @@
-# Production-Ready ML Image Classification System
+# EyeVsAI - Production ML Image Classification Game
 
-A comprehensive machine learning project featuring **extracted, modular, and production-ready** image classification models with unified CLI interface, comprehensive testing, and deployment capabilities. All models implement consistent interfaces following MLOps best practices.
+A comprehensive machine learning project featuring **production-ready image classification models** with a **full-stack web game** where players compete against AI models. The system includes unified CLI interfaces, comprehensive testing, OAuth authentication, leaderboards, and cloud deployment capabilities.
 
 ## 🚀 Project Overview
 
-This project is a **production-ready modular system** for training image recognition ML models with:
+This project is a **complete ML system with a gamified web application** featuring:
 
+### ML Training System
 - **4 Complete Model Packages** - Shallow Learning, Deep Learning v1/v2, Transfer Learning
 - **Unified CLI Interface** - Single command-line tool for training any model
-- **Comprehensive Testing** - Structural, unit, and integration tests
-- **Production Architecture** - Consistent interfaces, memory optimization, error handling
-- **MLOps Integration** - Model registry, configuration management, deployment tools
+- **Production Pipeline** - Automated training, hyperparameter tuning, model registry
+- **MLOps Integration** - Model versioning, ONNX export, deployment tools
+
+### Game Application
+- **Full-Stack Web Game** - Players compete against AI models in image classification
+- **OAuth Authentication** - Support for Google, Facebook, GitHub, Discord, Twitter, Apple
+- **Real-time Leaderboards** - Global rankings with multiple time periods
+- **Cryptographic Fairness** - Provable AI predictions with commitment schemes
+- **Cloud Deployment** - Docker containers, S3 storage, Redis caching
 
 ## 📁 Project Structure
 
@@ -85,10 +92,25 @@ eyeVsAI/
 │   └── checkpoints/               # Model checkpoints
 │
 ├── backend/                       # 🔧 Backend Services
-│   ├── api/                       # Classification API server
-│   │   ├── src/                   # API implementation
-│   │   ├── Dockerfile             # Container configuration
-│   │   └── requirements.txt       # Python dependencies
+│   ├── api/                       # Game API server
+│   │   ├── app/                   # FastAPI application
+│   │   │   ├── routes/            # API endpoints
+│   │   │   │   ├── auth.py        # Authentication & OAuth
+│   │   │   │   ├── game.py        # Game management
+│   │   │   │   └── images.py      # Image serving
+│   │   │   ├── services/          # Business logic
+│   │   │   │   ├── model_manager.py      # AI model integration
+│   │   │   │   ├── game_backend_service.py # Game logic
+│   │   │   │   ├── cache_service.py      # Redis caching
+│   │   │   │   └── s3_service.py         # Cloud storage
+│   │   │   ├── auth.py            # JWT & OAuth logic
+│   │   │   ├── database.py        # Database setup
+│   │   │   ├── db_models.py       # SQLAlchemy models
+│   │   │   └── main.py            # FastAPI app
+│   │   ├── requirements.txt       # Python dependencies
+│   │   ├── .env.example           # Environment variables
+│   │   ├── start.sh               # Startup script
+│   │   └── API_DOCUMENTATION.md   # API reference
 │   │
 │   └── deploy/                    # Deployment configuration
 │       └── nginx.conf             # Nginx configuration
@@ -101,8 +123,13 @@ eyeVsAI/
 │
 ├── docs/                          # 📚 Documentation
 │   ├── CLI_USAGE.md              # Complete CLI documentation
+│   ├── CLI_USAGE_PRODUCTION_TRAINING.md  # Production training guide
 │   ├── TESTING_SUMMARY.md        # Testing framework guide
+│   ├── CLEANUP_GUIDE.md          # Model cleanup documentation
 │   └── PROJECT_COMPLETION_SUMMARY.md # Implementation overview
+│
+├── GAME_DESIGN.md                # Game design and architecture
+├── CLAUDE.md                     # AI assistant instructions
 │
 ├── train_models.py               # 🎯 UNIFIED CLI LAUNCHER
 ├── test_models.py                # Comprehensive testing suite
@@ -147,8 +174,17 @@ eyeVsAI/
 git clone <repository-url>
 cd eyeVsAI
 
-# Install dependencies for all models (optional - can install per model)
-pip install torch torchvision tensorflow scikit-learn opencv-python numpy matplotlib Pillow torchinfo
+# Set up Python environment (recommended: Python 3.9+)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install ML dependencies
+pip install -r requirements.txt
+
+# Install backend dependencies
+cd backend/api
+pip install -r requirements.txt
+cd ../..
 ```
 
 ### 2. List Available Models
@@ -188,23 +224,22 @@ python train_models.py install transfer
 ### 4. Train Models
 
 ```bash
-# Train shallow learning classifier
-python models/classifiers/shallow/scripts/train.py --data_path /path/to/dataset --epochs 100
+# Train individual models
+python train_models.py shallow --data_path ./data/downloads/pets --epochs 100
+python train_models.py deep-v2 --data_path ./data/downloads/pets --batch_size 8
+python train_models.py transfer --data_path ./data/downloads/pets --base_model resnet50
 
-# Train advanced deep learning model with memory optimization
-python models/classifiers/deep-v2/scripts/train.py \
-    --data_path /path/to/dataset \
-    --epochs 25 \
-    --batch_size 8 \
-    --memory_efficient \
-    --mixup_prob 0.3
+# Run production training pipeline
+cd models/production
+python scripts/train_all_production_models.py \
+    --models shallow deep_v1 deep_v2 transfer \
+    --datasets pets vegetables instruments street_foods combined \
+    --parallel_jobs 4 \
+    --run_tuning \
+    --auto-cleanup
 
-# Train transfer learning model with ResNet50
-python models/classifiers/transfer/scripts/train.py \
-    --data_path /path/to/dataset \
-    --base_model resnet50 \
-    --fine_tune_layers 10 \
-    --mixed_precision
+# Generate game backend report
+python scripts/train_all_production_models.py --generate_reports_only
 ```
 
 ### 5. Get Model-Specific Help
@@ -389,24 +424,105 @@ metadata = ModelMetadata(
 registry.register_model(metadata)
 ```
 
+## 🎮 Game Backend Setup
+
+### 1. Database Setup
+
+```bash
+# Option A: PostgreSQL (recommended for production)
+docker run -d --name eyevsai-db \
+    -e POSTGRES_USER=eyevsai \
+    -e POSTGRES_PASSWORD=your-password \
+    -e POSTGRES_DB=eyevsai_db \
+    -p 5432:5432 \
+    postgres:15
+
+# Option B: SQLite (for development)
+# Automatically created when you start the backend
+```
+
+### 2. Configure Environment
+
+```bash
+cd backend/api
+cp .env.example .env
+# Edit .env with your configuration:
+# - Database URL
+# - OAuth client IDs and secrets
+# - AWS credentials (optional)
+# - Redis URL (optional)
+```
+
+### 3. Start Backend API
+
+```bash
+cd backend/api
+./start.sh
+# API will be available at http://localhost:8000
+# Swagger docs at http://localhost:8000/api/docs
+```
+
+### 4. OAuth Setup
+
+To enable social logins, configure OAuth apps:
+
+1. **Google**: https://console.cloud.google.com/
+   - Create OAuth 2.0 Client ID
+   - Add redirect URI: `http://localhost:3000/auth/callback/google`
+
+2. **Facebook**: https://developers.facebook.com/
+   - Create App → Add Facebook Login
+   - Valid OAuth Redirect URI: `http://localhost:3000/auth/callback/facebook`
+
+3. **GitHub**: https://github.com/settings/developers
+   - New OAuth App
+   - Authorization callback URL: `http://localhost:3000/auth/callback/github`
+
+4. Add credentials to `.env` file
+
 ## 🚀 Production Deployment
 
-### Model Integration
-All models follow the same interface for easy integration:
+### 1. Docker Deployment
 
-```python
-# Generic model loading
-def load_classifier(model_type: str, model_path: str) -> BaseImageClassifier:
-    classifiers = {
-        'shallow': ShallowImageClassifier,
-        'deep_v1': DeepLearningV1Classifier,
-        'deep_v2': DeepLearningV2Classifier,
-        'transfer': TransferLearningClassifier
-    }
-    
-    classifier = classifiers[model_type]()
-    classifier.load_model(model_path)
-    return classifier
+```bash
+# Build and run all services
+docker-compose up --build
+
+# Services:
+# - API: http://localhost:8000
+# - Frontend: http://localhost:3000
+# - PostgreSQL: localhost:5432
+# - Redis: localhost:6379
+```
+
+### 2. Model Deployment to S3
+
+```bash
+# Configure AWS credentials
+export AWS_ACCESS_KEY_ID=your-key
+export AWS_SECRET_ACCESS_KEY=your-secret
+
+# Upload models to S3
+python scripts/deploy_models_to_s3.py \
+    --model_dir ./models/production/models \
+    --bucket eyevsai-models
+
+# Upload training images
+python scripts/deploy_images_to_s3.py \
+    --data_dir ./data/downloads \
+    --bucket eyevsai-images
+```
+
+### 3. Environment Variables
+
+```bash
+# Production environment variables
+DATABASE_URL=postgresql://user:pass@db-host/eyevsai_db
+REDIS_URL=redis://redis-host:6379/0
+SECRET_KEY=generate-with-openssl-rand-hex-32
+ALLOWED_ORIGINS=https://yourdomain.com
+S3_BUCKET_NAME=eyevsai-models
+S3_BUCKET_IMAGES=eyevsai-images
 ```
 
 ### CLI Integration in Production
@@ -465,10 +581,53 @@ for model in models:
         print(f"✅ {model} training completed")
 ```
 
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - Create new account
+- `POST /api/v1/auth/login` - Login with email/password
+- `POST /api/v1/auth/guest` - Create guest session
+- `GET /api/v1/auth/oauth/{provider}/authorize` - OAuth login
+- `POST /api/v1/auth/oauth/callback` - OAuth callback
+
+### Game
+- `GET /api/v1/game/datasets` - Available datasets
+- `POST /api/v1/game/session` - Start new game
+- `POST /api/v1/game/session/{id}/round` - Get next round
+- `POST /api/v1/game/round/{id}/submit` - Submit answer
+- `POST /api/v1/game/session/{id}/complete` - Finish game
+- `GET /api/v1/game/leaderboard/{dataset}/{difficulty}` - Rankings
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based auth
+- **OAuth 2.0**: Industry-standard social logins
+- **Password Security**: Bcrypt hashing with salt
+- **Cryptographic Commitments**: Provable AI predictions
+- **SQL Injection Prevention**: Parameterized queries
+- **CORS Protection**: Configurable origin validation
+- **Rate Limiting**: API request throttling
+
+## 🏗️ Architecture
+
+### Backend Stack
+- **Framework**: FastAPI (Python 3.9+)
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Authentication**: JWT + OAuth 2.0
+- **Caching**: Redis
+- **Storage**: AWS S3 or local filesystem
+- **ML Models**: PyTorch, TensorFlow, scikit-learn
+
+### Frontend Stack (Coming Soon)
+- **Framework**: React 18+
+- **State Management**: Redux Toolkit
+- **UI Components**: Material-UI
+- **API Client**: Axios with interceptors
+
 ## 🤝 Contributing
 
 1. **Fork the repository**
-2. **Create feature branch**: `git checkout -b feature/new-model`
+2. **Create feature branch**: `git checkout -b feature/new-feature`
 3. **Follow established patterns**: Use existing modules as templates
 4. **Add comprehensive tests**: Include structural and unit tests
 5. **Update documentation**: Maintain documentation consistency
@@ -500,16 +659,25 @@ python test_structure.py
 python train_models.py transfer --help
 ```
 
-### Model-Specific Optimal Configurations
+### Production Commands
 ```bash
-# Shallow Learning (Traditional ML)
-python models/classifiers/shallow/scripts/train.py --data_path /data --feature_types hog lbp color_histogram
+# Train all models on all datasets
+python models/production/scripts/train_all_production_models.py --parallel_jobs 4
 
-# Deep Learning v2 (Advanced CNN)  
-python models/classifiers/deep-v2/scripts/train.py --data_path /data --batch_size 8 --accumulation_steps 4 --memory_efficient
+# Generate game backend report
+python models/production/scripts/train_all_production_models.py --generate_reports_only
 
-# Transfer Learning (Pre-trained)
-python models/classifiers/transfer/scripts/train.py --data_path /data --base_model resnet50 --mixed_precision --fine_tune_layers 10
+# Start game backend
+cd backend/api && ./start.sh
+
+# Run with Docker
+docker-compose up --build
 ```
 
-This production-ready system provides a solid foundation for scalable ML development, deployment, and maintenance for enterprise use.
+## 📈 Performance
+
+### Training Results
+- **Best Overall Model**: shallow/rf_hog_lbp on vegetables (97.73% accuracy)
+- **Best Transfer Learning**: ResNet101 across all datasets
+- **142 Models Trained**: Across 5 datasets with hyperparameter tuning
+- **Game-Ready**: Models categorized by difficulty for balanced gameplay

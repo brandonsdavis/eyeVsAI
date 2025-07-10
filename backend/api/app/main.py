@@ -16,23 +16,38 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import os
+import logging
 
-from .routes import classification, health
+from .routes import classification, health, auth, game, images
 from .services.model_manager import ModelManager
+from .database import create_tables, engine
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Image Classification API",
-    description="API for image classification using multiple ML models",
-    version="1.0.0"
+    title="EyeVsAI Game API",
+    description="Backend API for the EyeVsAI image classification game",
+    version="2.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # CORS middleware for frontend integration
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Initialize model manager
@@ -40,20 +55,66 @@ model_manager = ModelManager()
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1")
-app.include_router(classification.router, prefix="/api/v1", dependencies=[])
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(game.router, prefix="/api/v1")
+app.include_router(images.router, prefix="/api/v1")
+app.include_router(classification.router, prefix="/api/v1")  # Legacy support
 
-# Mount static files for serving uploaded images
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Create static directory if it doesn't exist
+static_dir = "static"
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize models on startup."""
-    await model_manager.initialize_models()
+    """Initialize application on startup."""
+    try:
+        # Create database tables
+        logger.info("Creating database tables...")
+        create_tables()
+        
+        # Initialize model manager
+        logger.info("Initializing model manager...")
+        await model_manager.initialize_models()
+        
+        logger.info("Application startup complete")
+    except Exception as e:
+        logger.error(f"Startup failed: {e}")
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    await model_manager.cleanup()
+    try:
+        logger.info("Shutting down application...")
+        await model_manager.cleanup()
+        logger.info("Application shutdown complete")
+    except Exception as e:
+        logger.error(f"Shutdown error: {e}")
+
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "message": "Welcome to EyeVsAI Game API",
+        "version": "2.0.0",
+        "docs": "/api/docs"
+    }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Get configuration from environment
+    host = os.getenv("API_HOST", "0.0.0.0")
+    port = int(os.getenv("API_PORT", "8000"))
+    reload = os.getenv("API_RELOAD", "true").lower() == "true"
+    
+    uvicorn.run(
+        "app.main:app" if reload else app,
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info"
+    )
