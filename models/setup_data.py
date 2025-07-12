@@ -118,22 +118,7 @@ def main():
         else:
             print(f"  ❌ {dataset_name} (not downloaded)")
     
-    print("\n🎉 Dataset setup complete!")
-    print("\n💡 Next steps:")
-    print("   1. Run training notebooks in each model directory")
-    print("   2. Use the unified data loaders in your models:")
-    print("      # Unified classification (all classes from all datasets)")
-    print("      from ml_models_core.src.data_loaders import get_unified_classification_data")
-    print("      data = get_unified_classification_data(framework='pytorch')")
-    print("      ")
-    print("      # Individual datasets")
-    print("      from ml_models_core.src.data_loaders import get_pets_data, get_vegetables_data")
-    print("      pets = get_pets_data(framework='pytorch')")
-    print("      vegetables = get_vegetables_data(framework='sklearn')")
-    print("      ")
-    print("      street_foods = get_street_foods_data(framework='sklearn')")
-    print("      instruments = get_musical_instruments_data(framework='pytorch')")
-    print("   3. The unified dataset contains all classes without prefixes")
+    print("\n Dataset setup complete!")
 
 
 if __name__ == "__main__":
