@@ -318,9 +318,32 @@ class ProductionTrainer:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "deep-v1"
         script_path = module_path / "scripts" / "train_improved.py"
         
+        # Create log directory for the training script
+        training_log_dir = model_dir / "logs"
+        training_log_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure the scripts can find their expected log directories
+        project_root = self._get_project_root()
+        
+        # Create logs directory in project root (where scripts expect it)
+        project_logs_dir = project_root / "logs"
+        project_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Also create model-specific logs directories
+        models_logs_dir = project_root / "models" / "logs"
+        models_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Deep learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 64)),
             "--learning_rate", str(params.get("learning_rate", 0.01)),
             "--num_epochs", str(params.get("num_epochs", 50)),
@@ -332,10 +355,39 @@ class ProductionTrainer:
         
         # Run training from project root
         log_file = model_dir / "training.log"
+        error_file = model_dir / "training_errors.log"
         project_root = self._get_project_root()
         env = self._get_training_env()
-        with open(log_file, 'w') as f:
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, text=True, cwd=project_root, env=env)
+        
+        # Log the command for debugging
+        self.logger.info(f"Running command: {' '.join(cmd)}")
+        self.logger.info(f"Working directory: {project_root}")
+        
+        with open(log_file, 'w') as f_out, open(error_file, 'w') as f_err:
+            process = subprocess.run(
+                cmd, 
+                stdout=f_out, 
+                stderr=f_err, 
+                text=True, 
+                cwd=project_root, 
+                env=env
+            )
+        
+        # Check if training failed
+        if process.returncode != 0:
+            self.logger.error(f"Training failed with return code {process.returncode}")
+            if error_file.exists():
+                with open(error_file, 'r') as f:
+                    error_content = f.read()
+                    if error_content:
+                        self.logger.error(f"Error output:\n{error_content}")
+            # Append error to main log for metric extraction
+            with open(log_file, 'a') as f:
+                f.write(f"\n\nTraining failed with return code {process.returncode}\n")
+                if error_file.exists():
+                    with open(error_file, 'r') as f_err:
+                        f.write("Error output:\n")
+                        f.write(f_err.read())
         
         # Copy trained model to production location
         source_model = Path(module_path) / "models" / "deep_v1_improved.pth"
@@ -356,9 +408,32 @@ class ProductionTrainer:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "deep-v2"
         script_path = module_path / "scripts" / "train_improved.py"
         
+        # Create log directory for the training script
+        training_log_dir = model_dir / "logs"
+        training_log_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure the scripts can find their expected log directories
+        project_root = self._get_project_root()
+        
+        # Create logs directory in project root (where scripts expect it)
+        project_logs_dir = project_root / "logs"
+        project_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Also create model-specific logs directories
+        models_logs_dir = project_root / "models" / "logs"
+        models_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Deep learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 64)),
             "--learning_rate", str(params.get("learning_rate", 0.1)),
             "--num_epochs", str(params.get("num_epochs", 100)),
@@ -371,10 +446,39 @@ class ProductionTrainer:
         
         # Run training from project root
         log_file = model_dir / "training.log"
+        error_file = model_dir / "training_errors.log"
         project_root = self._get_project_root()
         env = self._get_training_env()
-        with open(log_file, 'w') as f:
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, text=True, cwd=project_root, env=env)
+        
+        # Log the command for debugging
+        self.logger.info(f"Running command: {' '.join(cmd)}")
+        self.logger.info(f"Working directory: {project_root}")
+        
+        with open(log_file, 'w') as f_out, open(error_file, 'w') as f_err:
+            process = subprocess.run(
+                cmd, 
+                stdout=f_out, 
+                stderr=f_err, 
+                text=True, 
+                cwd=project_root, 
+                env=env
+            )
+        
+        # Check if training failed
+        if process.returncode != 0:
+            self.logger.error(f"Training failed with return code {process.returncode}")
+            if error_file.exists():
+                with open(error_file, 'r') as f:
+                    error_content = f.read()
+                    if error_content:
+                        self.logger.error(f"Error output:\n{error_content}")
+            # Append error to main log for metric extraction
+            with open(log_file, 'a') as f:
+                f.write(f"\n\nTraining failed with return code {process.returncode}\n")
+                if error_file.exists():
+                    with open(error_file, 'r') as f_err:
+                        f.write("Error output:\n")
+                        f.write(f_err.read())
         
         # Copy trained model
         source_model = Path(module_path) / "models" / "deep_v2_improved.pth"
@@ -395,24 +499,75 @@ class ProductionTrainer:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "transfer"
         script_path = module_path / "scripts" / "train_pytorch.py"
         
+        # Create log directory for the training script
+        training_log_dir = model_dir / "logs"
+        training_log_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure the scripts can find their expected log directories
+        project_root = self._get_project_root()
+        
+        # Create logs directory in project root (where scripts expect it)
+        project_logs_dir = project_root / "logs"
+        project_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Also create model-specific logs directories
+        models_logs_dir = project_root / "models" / "logs"
+        models_logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Deep learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 32)),
             "--learning_rate", str(params.get("learning_rate", 0.001)),
             "--num_epochs", str(params.get("num_epochs", 30)),
             "--base_model", params.get("base_model", "resnet50"),
             "--optimizer", params.get("optimizer", "adamw"),
-            "--model_save_path", str(model_dir / "model.pth"),
-            "--log_dir", str(model_dir / "logs")
+            "--model_save_path", str(model_dir / "model.pth")
         ]
         
         # Run training from project root
         log_file = model_dir / "training.log"
+        error_file = model_dir / "training_errors.log"
         project_root = self._get_project_root()
         env = self._get_training_env()
-        with open(log_file, 'w') as f:
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, text=True, cwd=project_root, env=env)
+        
+        # Log the command for debugging
+        self.logger.info(f"Running command: {' '.join(cmd)}")
+        self.logger.info(f"Working directory: {project_root}")
+        
+        with open(log_file, 'w') as f_out, open(error_file, 'w') as f_err:
+            process = subprocess.run(
+                cmd, 
+                stdout=f_out, 
+                stderr=f_err, 
+                text=True, 
+                cwd=project_root, 
+                env=env
+            )
+        
+        # Check if training failed
+        if process.returncode != 0:
+            self.logger.error(f"Training failed with return code {process.returncode}")
+            if error_file.exists():
+                with open(error_file, 'r') as f:
+                    error_content = f.read()
+                    if error_content:
+                        self.logger.error(f"Error output:\n{error_content}")
+            # Append error to main log for metric extraction
+            with open(log_file, 'a') as f:
+                f.write(f"\n\nTraining failed with return code {process.returncode}\n")
+                if error_file.exists():
+                    with open(error_file, 'r') as f_err:
+                        f.write("Error output:\n")
+                        f.write(f_err.read())
         
         # Extract metrics
         metrics = self._extract_metrics_from_log(log_file)

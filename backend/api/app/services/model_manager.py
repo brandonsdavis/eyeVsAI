@@ -328,26 +328,39 @@ class ModelManager:
         return host_path
     
     def _detect_model_format(self, model_path, model_data=None):
-        """Detect model format from metadata or file extension."""
+        """Detect model format from metadata or file extension with enterprise-grade priority."""
         if model_data and "model_format" in model_data:
             format_type = model_data["model_format"]
             logger.info(f"Using specified model format: {format_type}")
             return format_type
         
-        # Fallback to file extension detection
+        # Fallback to file extension detection with enterprise priority
         model_path = Path(model_path)
         
-        # If it's a directory, look for model files inside
+        # If it's a directory, look for model files inside with priority order
         if model_path.is_dir():
-            if (model_path / "model.pth").exists():
+            # Priority 1: TorchScript (.pt) - Production ready
+            if (model_path / "model.pt").exists():
+                return "torchscript"
+            # Priority 2: ONNX (.onnx) - Cross-platform
+            elif any(model_path.glob("*.onnx")):
+                return "onnx"
+            # Priority 3: PyTorch state dict (.pth) - Training compatibility
+            elif (model_path / "model.pth").exists():
                 return "pytorch"
+            # Priority 4: TensorFlow formats
             elif any(model_path.glob("*.h5")) or any(model_path.glob("*.keras")):
                 return "tensorflow"
+            # Priority 5: sklearn
             elif any(model_path.glob("*.pkl")):
                 return "sklearn"
         else:
-            # Check file extension directly
-            if model_path.suffix == ".pth":
+            # Check file extension directly with priority
+            if model_path.suffix == ".pt":
+                return "torchscript"
+            elif model_path.suffix == ".onnx":
+                return "onnx"
+            elif model_path.suffix == ".pth":
                 return "pytorch"
             elif model_path.suffix in [".h5", ".keras"]:
                 return "tensorflow"
@@ -428,7 +441,7 @@ class ModelManager:
             return None
     
     async def _create_classifier(self, model_type: str, model_path: Path) -> Optional[Any]:
-        """Create classifier instance based on model type."""
+        """Create classifier instance based on model type with enterprise-grade format handling."""
         try:
             if model_type == "shallow" and ShallowImageClassifier:
                 classifier = ShallowImageClassifier()
@@ -443,27 +456,230 @@ class ModelManager:
                 classifier.load_model(str(model_path))
                 return classifier
             elif model_type == "transfer":
-                # Detect model format to choose the right classifier
-                model_format = self._detect_model_format(model_path)
-                if model_format == "pytorch" and PyTorchTransferLearningClassifier:
-                    classifier = PyTorchTransferLearningClassifier()
-                    # For PyTorch models, use the model.pth file inside the directory
-                    pytorch_model_path = model_path / "model.pth" if model_path.is_dir() else model_path
-                    classifier.load_model(str(pytorch_model_path))
-                    return classifier
-                elif model_format == "tensorflow" and TransferLearningClassifier:
-                    classifier = TransferLearningClassifier()
-                    classifier.load_model(str(model_path))
-                    return classifier
-                else:
-                    logger.error(f"No suitable transfer learning classifier available for format: {model_format}")
-                    return None
+                # Enterprise-grade format detection and fallback
+                return await self._load_transfer_model_with_fallback(model_path)
             else:
                 logger.error(f"Unknown or unavailable model type: {model_type}")
                 return None
         except Exception as e:
             logger.error(f"Failed to create classifier for {model_type}: {e}")
             return None
+    
+    async def _load_transfer_model_with_fallback(self, model_path: Path) -> Optional[Any]:
+        """Load transfer learning model with enterprise-grade format fallback."""
+        model_format = self._detect_model_format(model_path)
+        
+        # Try formats in priority order with fallback
+        fallback_formats = [
+            ("torchscript", "model.pt"),
+            ("onnx", "*.onnx"),
+            ("pytorch", "model.pth"),
+            ("tensorflow", "*.h5"),
+            ("tensorflow", "*.keras")
+        ]
+        
+        # Start with detected format, then try fallbacks
+        formats_to_try = [model_format]
+        for fmt, _ in fallback_formats:
+            if fmt not in formats_to_try:
+                formats_to_try.append(fmt)
+        
+        for format_type in formats_to_try:
+            try:
+                classifier = await self._create_transfer_classifier(model_path, format_type)
+                if classifier:
+                    logger.info(f"Successfully loaded transfer model with format: {format_type}")
+                    return classifier
+            except Exception as e:
+                logger.warning(f"Failed to load transfer model with format {format_type}: {e}")
+                continue
+        
+        logger.error(f"No suitable transfer learning classifier could be loaded from {model_path}")
+        return None
+    
+    async def _create_transfer_classifier(self, model_path: Path, format_type: str) -> Optional[Any]:
+        """Create transfer learning classifier for specific format."""
+        if format_type == "torchscript":
+            if not PyTorchTransferLearningClassifier:
+                raise ImportError("PyTorchTransferLearningClassifier not available")
+            
+            # Look for TorchScript file
+            torchscript_path = model_path / "model.pt" if model_path.is_dir() else model_path
+            if not torchscript_path.exists():
+                raise FileNotFoundError(f"TorchScript model not found: {torchscript_path}")
+            
+            classifier = PyTorchTransferLearningClassifier()
+            classifier.load_model(str(torchscript_path))
+            return classifier
+            
+        elif format_type == "onnx":
+            if not PyTorchTransferLearningClassifier:
+                raise ImportError("PyTorchTransferLearningClassifier not available for ONNX")
+            
+            # Look for ONNX file
+            if model_path.is_dir():
+                onnx_files = list(model_path.glob("*.onnx"))
+                if not onnx_files:
+                    raise FileNotFoundError(f"ONNX model not found in {model_path}")
+                onnx_path = onnx_files[0]
+            else:
+                onnx_path = model_path
+            
+            if not onnx_path.exists():
+                raise FileNotFoundError(f"ONNX model not found: {onnx_path}")
+            
+            # Note: ONNX loading would require additional implementation
+            # For now, we'll skip ONNX and fall back to PyTorch
+            raise NotImplementedError("ONNX loading not yet implemented")
+            
+        elif format_type == "pytorch":
+            if not PyTorchTransferLearningClassifier:
+                raise ImportError("PyTorchTransferLearningClassifier not available")
+            
+            # Look for PyTorch state dict
+            pytorch_path = model_path / "model.pth" if model_path.is_dir() else model_path
+            if not pytorch_path.exists():
+                raise FileNotFoundError(f"PyTorch model not found: {pytorch_path}")
+            
+            classifier = PyTorchTransferLearningClassifier()
+            classifier.load_model(str(pytorch_path))
+            return classifier
+            
+        elif format_type == "tensorflow":
+            if not TransferLearningClassifier:
+                raise ImportError("TransferLearningClassifier not available")
+            
+            # Look for TensorFlow model files
+            if model_path.is_dir():
+                tf_files = list(model_path.glob("*.h5")) + list(model_path.glob("*.keras"))
+                if not tf_files:
+                    raise FileNotFoundError(f"TensorFlow model not found in {model_path}")
+                tf_path = tf_files[0]
+            else:
+                tf_path = model_path
+            
+            if not tf_path.exists():
+                raise FileNotFoundError(f"TensorFlow model not found: {tf_path}")
+            
+            classifier = TransferLearningClassifier()
+            classifier.load_model(str(tf_path))
+            return classifier
+            
+        else:
+            raise ValueError(f"Unsupported model format: {format_type}")
+    
+    def validate_model_format(self, model_path: Path, expected_format: str = None) -> Dict[str, Any]:
+        """Validate model format and return comprehensive validation results."""
+        validation_result = {
+            "path": str(model_path),
+            "exists": model_path.exists(),
+            "detected_format": "unknown",
+            "available_formats": [],
+            "metadata_files": [],
+            "validation_errors": [],
+            "recommendations": []
+        }
+        
+        if not model_path.exists():
+            validation_result["validation_errors"].append(f"Model path does not exist: {model_path}")
+            return validation_result
+        
+        try:
+            # Detect available formats
+            if model_path.is_dir():
+                # Check for different model formats in directory
+                formats_found = []
+                
+                # TorchScript
+                if (model_path / "model.pt").exists():
+                    formats_found.append("torchscript")
+                    if (model_path / "model.metadata.json").exists():
+                        validation_result["metadata_files"].append("model.metadata.json")
+                    if (model_path / "model.model_card.json").exists():
+                        validation_result["metadata_files"].append("model.model_card.json")
+                
+                # ONNX
+                onnx_files = list(model_path.glob("*.onnx"))
+                if onnx_files:
+                    formats_found.append("onnx")
+                
+                # PyTorch state dict
+                if (model_path / "model.pth").exists():
+                    formats_found.append("pytorch")
+                
+                # TensorFlow
+                tf_files = list(model_path.glob("*.h5")) + list(model_path.glob("*.keras"))
+                if tf_files:
+                    formats_found.append("tensorflow")
+                
+                # sklearn
+                pkl_files = list(model_path.glob("*.pkl"))
+                if pkl_files:
+                    formats_found.append("sklearn")
+                
+                validation_result["available_formats"] = formats_found
+                
+                # Determine primary format
+                if "torchscript" in formats_found:
+                    validation_result["detected_format"] = "torchscript"
+                elif "onnx" in formats_found:
+                    validation_result["detected_format"] = "onnx"
+                elif "pytorch" in formats_found:
+                    validation_result["detected_format"] = "pytorch"
+                elif "tensorflow" in formats_found:
+                    validation_result["detected_format"] = "tensorflow"
+                elif "sklearn" in formats_found:
+                    validation_result["detected_format"] = "sklearn"
+            
+            else:
+                # Single file - detect by extension
+                if model_path.suffix == ".pt":
+                    validation_result["detected_format"] = "torchscript"
+                    validation_result["available_formats"] = ["torchscript"]
+                elif model_path.suffix == ".onnx":
+                    validation_result["detected_format"] = "onnx"
+                    validation_result["available_formats"] = ["onnx"]
+                elif model_path.suffix == ".pth":
+                    validation_result["detected_format"] = "pytorch"
+                    validation_result["available_formats"] = ["pytorch"]
+                elif model_path.suffix in [".h5", ".keras"]:
+                    validation_result["detected_format"] = "tensorflow"
+                    validation_result["available_formats"] = ["tensorflow"]
+                elif model_path.suffix == ".pkl":
+                    validation_result["detected_format"] = "sklearn"
+                    validation_result["available_formats"] = ["sklearn"]
+            
+            # Validate against expected format
+            if expected_format and validation_result["detected_format"] != expected_format:
+                if expected_format in validation_result["available_formats"]:
+                    validation_result["validation_errors"].append(
+                        f"Expected format '{expected_format}' is available but not primary format"
+                    )
+                else:
+                    validation_result["validation_errors"].append(
+                        f"Expected format '{expected_format}' not found"
+                    )
+            
+            # Generate recommendations
+            if "torchscript" not in validation_result["available_formats"] and "pytorch" in validation_result["available_formats"]:
+                validation_result["recommendations"].append(
+                    "Consider exporting PyTorch model to TorchScript for production deployment"
+                )
+            
+            if not validation_result["metadata_files"]:
+                validation_result["recommendations"].append(
+                    "Consider adding metadata files (*.metadata.json, *.model_card.json) for better model management"
+                )
+            
+            if len(validation_result["available_formats"]) == 1:
+                validation_result["recommendations"].append(
+                    "Consider exporting model in multiple formats for better compatibility"
+                )
+            
+        except Exception as e:
+            validation_result["validation_errors"].append(f"Validation error: {str(e)}")
+        
+        return validation_result
     
     def _predict_image(self, classifier: Any, image_path: str) -> Dict[str, Any]:
         """Make prediction on an image."""

@@ -24,7 +24,6 @@ class ModelType(str, Enum):
     DEEP_V1 = "deep_v1"
     DEEP_V2 = "deep_v2"
     TRANSFER = "transfer"
-    ENSEMBLE = "ensemble"
 
 
 class DifficultyLevel(str, Enum):
@@ -207,7 +206,7 @@ class LeaderboardResponse(BaseModel):
 # Legacy Models (for backward compatibility)
 class PredictionRequest(BaseModel):
     image_data: str  # Base64 encoded image
-    model_type: Optional[ModelType] = ModelType.ENSEMBLE
+    model_type: Optional[ModelType] = ModelType.TRANSFER
     top_k: Optional[int] = 3
 
 

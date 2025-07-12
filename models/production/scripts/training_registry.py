@@ -35,11 +35,11 @@ class TrainingRegistry:
         self.registry_path = Path(registry_path)
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         
+        # Setup logging first
+        self.logger = logging.getLogger(__name__)
+        
         # Load existing registry or create new one
         self.registry = self._load_registry()
-        
-        # Setup logging
-        self.logger = logging.getLogger(__name__)
     
     def _load_registry(self) -> Dict[str, Any]:
         """Load existing registry or create a new one."""

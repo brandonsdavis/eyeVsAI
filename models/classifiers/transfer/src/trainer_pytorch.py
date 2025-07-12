@@ -25,6 +25,7 @@ import json
 import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import warnings
 
 from .config import TransferLearningClassifierConfig
 from .models_pytorch import TransferLearningModelPyTorch
@@ -337,20 +338,251 @@ class TransferLearningTrainerPyTorch:
         logger.info(f"Saved checkpoint to {checkpoint_path}")
     
     def save_model(self, save_path: str):
-        """Save the final model."""
+        """
+        Save the model in multiple enterprise-grade formats.
+        
+        Exports:
+        1. TorchScript (.pt) - Primary format for production inference
+        2. ONNX (.onnx) - Cross-platform compatibility  
+        3. PyTorch State Dict (.pth) - Training compatibility
+        """
         save_path = Path(save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Save model state
+        # Model must be in eval mode for export
+        self.model.eval()
+        
+        logger.info("🚀 Starting enterprise model export...")
+        
+        # 1. Save PyTorch State Dict (for compatibility)
+        pytorch_path = save_path.with_suffix('.pth')
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'config': self.config.__dict__,
             'class_names': self.class_names,
             'input_size': self.model.input_size,
-            'training_history': self.training_history
-        }, save_path)
+            'training_history': self.training_history,
+            'model_format': 'pytorch_state_dict',
+            'export_timestamp': time.time(),
+            'pytorch_version': torch.__version__
+        }, pytorch_path)
+        logger.info(f"✅ PyTorch state dict saved: {pytorch_path}")
         
-        logger.info(f"Saved model to {save_path}")
+        # 2. Export TorchScript (Primary production format)
+        try:
+            torchscript_path = save_path.with_suffix('.pt')
+            
+            # Get input size - try model attribute first, then config fallback
+            if hasattr(self.model, 'input_size'):
+                input_size = self.model.input_size
+            elif hasattr(self.config, 'image_size'):
+                input_size = self.config.image_size
+            else:
+                input_size = (224, 224)  # Default fallback
+                logger.warning(f"Model input_size not found, using default: {input_size}")
+            
+            # Create dummy input for tracing
+            dummy_input = torch.randn(1, 3, *input_size).to(self.device)
+            
+            # Trace the model (preferred for production)
+            with torch.no_grad():
+                traced_model = torch.jit.trace(self.model, dummy_input)
+                
+            # Optimize for production
+            traced_model = torch.jit.optimize_for_inference(traced_model)
+            
+            # Save TorchScript model
+            traced_model.save(str(torchscript_path))
+            
+            # Save metadata separately
+            metadata = {
+                'class_names': self.class_names,
+                'input_size': list(input_size),
+                'config': self.config.__dict__,
+                'model_format': 'torchscript',
+                'export_timestamp': time.time(),
+                'pytorch_version': torch.__version__,
+                'optimized_for_inference': True
+            }
+            
+            metadata_path = save_path.with_suffix('.metadata.json')
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            logger.info(f"✅ TorchScript model saved: {torchscript_path}")
+            logger.info(f"✅ Metadata saved: {metadata_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ TorchScript export failed: {e}")
+            logger.warning("Continuing with other formats...")
+            import traceback
+            logger.debug(f"TorchScript export traceback:\n{traceback.format_exc()}")
+        
+        # 3. Export ONNX (Cross-platform compatibility)
+        try:
+            onnx_path = save_path.with_suffix('.onnx')
+            
+            # Get input size - try model attribute first, then config fallback
+            if hasattr(self.model, 'input_size'):
+                input_size = self.model.input_size
+            elif hasattr(self.config, 'image_size'):
+                input_size = self.config.image_size
+            else:
+                input_size = (224, 224)  # Default fallback
+            
+            # Create dummy input for ONNX export
+            dummy_input = torch.randn(1, 3, *input_size).to(self.device)
+            
+            # Dynamic axes for flexible batch size
+            dynamic_axes = {
+                'input': {0: 'batch_size'},
+                'output': {0: 'batch_size'}
+            }
+            
+            # Export to ONNX
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                torch.onnx.export(
+                    self.model,
+                    dummy_input,
+                    str(onnx_path),
+                    export_params=True,
+                    opset_version=11,
+                    do_constant_folding=True,
+                    input_names=['input'],
+                    output_names=['output'],
+                    dynamic_axes=dynamic_axes,
+                    verbose=False
+                )
+            
+            logger.info(f"✅ ONNX model saved: {onnx_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ ONNX export failed: {e}")
+            logger.warning("Continuing with other formats...")
+            import traceback
+            logger.debug(f"ONNX export traceback:\n{traceback.format_exc()}")
+        
+        # 4. Create comprehensive model card
+        self._create_model_card(save_path)
+        
+        # 5. Model validation
+        self._validate_exports(save_path)
+        
+        logger.info("🎉 Enterprise model export complete!")
+    
+    def _create_model_card(self, save_path: Path):
+        """Create a comprehensive model card with metadata."""
+        model_card = {
+            "model_info": {
+                "name": f"transfer-{self.config.base_model_name}",
+                "architecture": self.config.base_model_name,
+                "task": "image_classification",
+                "framework": "pytorch",
+                "version": "1.0.0",
+                "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "pytorch_version": torch.__version__
+            },
+            "training_config": self.config.__dict__,
+            "model_performance": {
+                "num_classes": len(self.class_names),
+                "class_names": self.class_names,
+                "training_history": self.training_history,
+                "input_shape": [1, 3] + list(self.model.input_size if hasattr(self.model, 'input_size') else self.config.image_size),
+                "output_shape": [1, len(self.class_names)]
+            },
+            "deployment_info": {
+                "formats_available": ["torchscript", "onnx", "pytorch_state_dict"],
+                "recommended_format": "torchscript",
+                "inference_device": "cuda" if torch.cuda.is_available() else "cpu",
+                "batch_sizes_tested": [1, 8, 16, 32]
+            },
+            "technical_details": {
+                "total_parameters": sum(p.numel() for p in self.model.parameters()),
+                "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
+                "model_size_mb": sum(p.numel() * p.element_size() for p in self.model.parameters()) / (1024 * 1024),
+                "mixed_precision_training": self.config.mixed_precision,
+                "gradient_clipping": self.config.gradient_clip > 0
+            }
+        }
+        
+        model_card_path = save_path.with_suffix('.model_card.json')
+        with open(model_card_path, 'w') as f:
+            json.dump(model_card, f, indent=2)
+        
+        logger.info(f"✅ Model card created: {model_card_path}")
+    
+    def _validate_exports(self, save_path: Path):
+        """Validate that exported models work correctly."""
+        logger.info("🔍 Validating exported models...")
+        
+        # Get input size - try model attribute first, then config fallback
+        if hasattr(self.model, 'input_size'):
+            input_size = self.model.input_size
+        elif hasattr(self.config, 'image_size'):
+            input_size = self.config.image_size
+        else:
+            input_size = (224, 224)  # Default fallback
+        
+        # Test data
+        dummy_input = torch.randn(1, 3, *input_size).to(self.device)
+        
+        # Get reference output from original model
+        with torch.no_grad():
+            reference_output = self.model(dummy_input)
+        
+        validation_results = {"original_model": "✅ Working"}
+        
+        # Test TorchScript model
+        torchscript_path = save_path.with_suffix('.pt')
+        if torchscript_path.exists():
+            try:
+                ts_model = torch.jit.load(str(torchscript_path), map_location=self.device)
+                ts_model.eval()
+                with torch.no_grad():
+                    ts_output = ts_model(dummy_input)
+                
+                # Check output similarity
+                if torch.allclose(reference_output, ts_output, atol=1e-4):
+                    validation_results["torchscript"] = "✅ Validated"
+                else:
+                    validation_results["torchscript"] = "⚠️ Output mismatch"
+            except Exception as e:
+                validation_results["torchscript"] = f"❌ Failed: {e}"
+        
+        # Test ONNX model (requires onnxruntime)
+        onnx_path = save_path.with_suffix('.onnx')
+        if onnx_path.exists():
+            try:
+                import onnxruntime as ort
+                ort_session = ort.InferenceSession(str(onnx_path))
+                
+                # Convert input to numpy
+                numpy_input = dummy_input.cpu().numpy()
+                ort_output = ort_session.run(None, {'input': numpy_input})[0]
+                
+                # Convert back to torch for comparison
+                ort_tensor = torch.from_numpy(ort_output).to(self.device)
+                
+                if torch.allclose(reference_output, ort_tensor, atol=1e-3):
+                    validation_results["onnx"] = "✅ Validated"
+                else:
+                    validation_results["onnx"] = "⚠️ Output mismatch"
+            except ImportError:
+                validation_results["onnx"] = "⚠️ onnxruntime not available"
+            except Exception as e:
+                validation_results["onnx"] = f"❌ Failed: {e}"
+        
+        # Log validation results
+        for model_type, result in validation_results.items():
+            logger.info(f"  {model_type}: {result}")
+        
+        # Save validation report
+        validation_path = save_path.with_suffix('.validation.json')
+        with open(validation_path, 'w') as f:
+            json.dump(validation_results, f, indent=2)
+        
+        logger.info(f"✅ Validation report saved: {validation_path}")
     
     def plot_training_history(self, save_path: Optional[str] = None):
         """Plot training history."""

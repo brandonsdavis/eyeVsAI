@@ -32,6 +32,5 @@ async def models_status() -> Dict[str, str]:
         "shallow": "loaded",
         "deep_v1": "loaded", 
         "deep_v2": "loaded",
-        "transfer": "loaded",
-        "ensemble": "loaded"
+        "transfer": "loaded"
     }

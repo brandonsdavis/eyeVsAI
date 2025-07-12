@@ -24,7 +24,7 @@ class ModelMetadata:
     """Model metadata structure."""
     name: str
     version: str
-    model_type: str  # "shallow", "deep_v1", "deep_v2", "transfer", "ensemble"
+    model_type: str  # "shallow", "deep_v1", "deep_v2", "transfer"
     accuracy: float
     training_date: str
     model_path: str

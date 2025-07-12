@@ -39,7 +39,7 @@ class ShallowLearningTrainer(BaseTrainer):
     def __init__(self, model: ShallowImageClassifier, config: ShallowLearningConfig):
         super().__init__(model, config.to_dict())
         self.config = config  # Keep typed config
-        self.feature_extractor = FeatureExtractor()
+        self.feature_extractor = FeatureExtractor(n_jobs=4)  # Use 4 CPU cores for parallel processing
         
     def train(self, data_path: str, **kwargs) -> Dict[str, Any]:
         """

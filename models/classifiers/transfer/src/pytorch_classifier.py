@@ -137,50 +137,120 @@ class PyTorchTransferLearningClassifier(BaseImageClassifier):
         ])
         
     def load_model(self, model_path: str) -> None:
-        """Load the trained PyTorch model."""
+        """Load the trained PyTorch model (supports TorchScript, PyTorch state dict)."""
+        logger.info(f"Loading PyTorch transfer learning model from: {model_path}")
+        
         try:
-            # Load checkpoint
-            checkpoint = torch.load(model_path, map_location=self.device)
+            model_path = Path(model_path)
             
-            # Extract metadata
-            self.config = checkpoint.get('config', {})
-            self.class_names = checkpoint.get('class_names', [])
-            self.num_classes = len(self.class_names)
-            input_size = checkpoint.get('input_size', (224, 224))
+            # Detect format and load accordingly
+            if model_path.suffix == '.pt':
+                # TorchScript model (production format)
+                self._load_torchscript_model(model_path)
+            elif model_path.suffix == '.pth':
+                # PyTorch state dict (training format)
+                self._load_pytorch_state_dict(model_path)
+            else:
+                # Try to auto-detect based on content
+                try:
+                    # First try as TorchScript
+                    self._load_torchscript_model(model_path)
+                except Exception:
+                    # Fallback to PyTorch state dict
+                    self._load_pytorch_state_dict(model_path)
             
-            # Create model architecture
-            base_model = self.config.get('base_model', 'resnet50')
-            dense_units = self.config.get('dense_units', [512, 256])
-            head_dropout_rate = self.config.get('head_dropout_rate', 0.5)
-            
-            self.model = TransferLearningModelPyTorch(
-                base_model_name=base_model,
-                num_classes=self.num_classes,
-                dense_units=dense_units,
-                head_dropout_rate=head_dropout_rate,
-                pretrained=False  # We're loading weights, don't need pretrained
-            )
-            
-            # Load model weights
-            self.model.load_state_dict(checkpoint['model_state_dict'])
             self.model.to(self.device)
             self.model.eval()
             
-            # Update transforms based on input size
-            if input_size != (224, 224):
-                self.transform = transforms.Compose([
-                    transforms.Resize(input_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-                ])
-            
             self._is_loaded = True
-            logger.info(f"PyTorch transfer learning model loaded successfully from {model_path}")
-            logger.info(f"Model: {base_model}, Classes: {self.num_classes}, Device: {self.device}")
+            logger.info(f"Successfully loaded model with {len(self.class_names)} classes")
             
         except Exception as e:
-            logger.error(f"Failed to load PyTorch model from {model_path}: {e}")
-            raise
+            logger.error(f"Failed to load model: {e}")
+            raise RuntimeError(f"Failed to load PyTorch transfer learning model: {e}")
+    
+    def _load_torchscript_model(self, model_path: Path) -> None:
+        """Load TorchScript model (production format)."""
+        logger.info(f"Loading TorchScript model from: {model_path}")
+        
+        # Load TorchScript model
+        self.model = torch.jit.load(str(model_path), map_location=self.device)
+        
+        # Load metadata from accompanying files
+        metadata_path = model_path.with_suffix('.metadata.json')
+        if metadata_path.exists():
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+                self.class_names = metadata.get('class_names', [])
+                self.config = metadata.get('config', {})
+                input_size = metadata.get('input_size', (224, 224))
+                logger.info(f"Loaded metadata from {metadata_path}")
+        else:
+            # Try to load from model card
+            model_card_path = model_path.with_suffix('.model_card.json')
+            if model_card_path.exists():
+                with open(model_card_path, 'r') as f:
+                    model_card = json.load(f)
+                    performance = model_card.get('model_performance', {})
+                    self.class_names = performance.get('class_names', [])
+                    self.config = model_card.get('training_config', {})
+                    input_shape = performance.get('input_shape', [1, 3, 224, 224])
+                    input_size = (input_shape[2], input_shape[3]) if len(input_shape) >= 4 else (224, 224)
+                    logger.info(f"Loaded metadata from model card: {model_card_path}")
+            else:
+                logger.warning("No metadata file found for TorchScript model")
+                self.class_names = []
+                self.config = {}
+                input_size = (224, 224)
+        
+        self.num_classes = len(self.class_names)
+        
+        # Update transforms based on input size
+        if input_size != (224, 224):
+            self.transform = transforms.Compose([
+                transforms.Resize(input_size),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+    
+    def _load_pytorch_state_dict(self, model_path: Path) -> None:
+        """Load PyTorch state dict (training format)."""
+        logger.info(f"Loading PyTorch state dict from: {model_path}")
+        
+        # Load the checkpoint
+        checkpoint = torch.load(model_path, map_location=self.device)
+        
+        # Extract metadata
+        self.config = checkpoint.get('config', {})
+        self.class_names = checkpoint.get('class_names', [])
+        self.num_classes = len(self.class_names)
+        input_size = checkpoint.get('input_size', (224, 224))
+        
+        # Create model architecture
+        base_model = self.config.get('base_model', 'resnet50')
+        dense_units = self.config.get('dense_units', [512, 256])
+        head_dropout_rate = self.config.get('head_dropout_rate', 0.5)
+        
+        self.model = TransferLearningModelPyTorch(
+            base_model_name=base_model,
+            num_classes=self.num_classes,
+            dense_units=dense_units,
+            head_dropout_rate=head_dropout_rate,
+            pretrained=False  # We're loading weights, don't need pretrained
+        )
+        
+        # Load model weights
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        
+        # Update transforms based on input size
+        if input_size != (224, 224):
+            self.transform = transforms.Compose([
+                transforms.Resize(input_size),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+        
+        logger.info(f"Loaded PyTorch state dict with {len(self.class_names)} classes")
     
     def preprocess(self, image: np.ndarray) -> torch.Tensor:
         """Preprocess image for prediction."""

@@ -26,7 +26,8 @@
       "Bash(code:*)",
       "Bash(curl:*)",
       "Bash(docker-compose exec:*)",
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(pip uninstall:*)"
     ],
     "deny": []
   }

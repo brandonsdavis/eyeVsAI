@@ -70,7 +70,7 @@ async def predict_image(request: PredictionRequest):
 @router.post("/predict/upload")
 async def predict_uploaded_image(
     file: UploadFile = File(...),
-    model_type: ModelType = ModelType.ENSEMBLE,
+    model_type: ModelType = ModelType.TRANSFER,
     top_k: int = 3
 ):
     """Predict classification for uploaded image file."""

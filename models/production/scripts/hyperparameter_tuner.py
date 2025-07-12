@@ -239,9 +239,17 @@ class HyperparameterTuner:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "deep-v1"
         script_path = module_path / "scripts" / "train_improved.py"
         
+        # Deep learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 64)),
             "--learning_rate", str(params.get("learning_rate", 0.01)),
             "--num_epochs", str(50),  # Increased for better convergence
@@ -274,9 +282,17 @@ class HyperparameterTuner:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "deep-v2"
         script_path = module_path / "scripts" / "train_improved.py"
         
+        # Deep learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 64)),
             "--learning_rate", str(params.get("learning_rate", 0.1)),
             "--num_epochs", str(50),  # Increased for better convergence
@@ -310,16 +326,23 @@ class HyperparameterTuner:
         module_path = Path(__file__).parent.parent.parent / "classifiers" / "transfer"
         script_path = module_path / "scripts" / "train_pytorch.py"
         
+        # Transfer learning scripts expect a directory with class subdirectories
+        # If dataset has train/val/test structure, use the train directory
+        dataset_path = Path(params["dataset_path"])
+        if (dataset_path / "train").exists() and (dataset_path / "train").is_dir():
+            data_path = str(dataset_path / "train")
+        else:
+            data_path = params["dataset_path"]
+        
         cmd = [
             sys.executable, str(script_path),
-            "--data_path", params["dataset_path"],
+            "--data_path", data_path,
             "--batch_size", str(params.get("batch_size", 32)),
             "--learning_rate", str(params.get("learning_rate", 0.001)),
             "--num_epochs", str(40),
             "--base_model", params.get("base_model", "resnet50"),
             "--optimizer", params.get("optimizer", "adamw"),
-            "--model_save_path", str(trial_dir / "model.pth"),
-            "--log_dir", str(trial_dir)
+            "--model_save_path", str(trial_dir / "model.pth")
         ]
         
         # Run training from project root with correct working directory

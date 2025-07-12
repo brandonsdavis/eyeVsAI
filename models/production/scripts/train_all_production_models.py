@@ -491,6 +491,59 @@ class ProductionPipeline:
                 }
                 return format_mapping.get(model_type, "unknown")
             
+            # Helper function to get comprehensive model metadata
+            def get_model_metadata(model_data: dict, model_type: str) -> dict:
+                """Extract comprehensive metadata for model registry."""
+                metadata = {
+                    "model_format": get_model_format(model_type),
+                    "export_formats": [],
+                    "deployment_ready": False,
+                    "performance_metrics": {},
+                    "model_size_info": {},
+                    "compatibility_info": {},
+                    "deployment_recommendations": []
+                }
+                
+                # Determine available export formats based on model type
+                if model_type in ["deep_v1", "deep_v2", "transfer"]:
+                    # PyTorch models can be exported to multiple formats
+                    metadata["export_formats"] = ["pytorch", "torchscript", "onnx"]
+                    metadata["deployment_ready"] = True
+                    metadata["compatibility_info"] = {
+                        "pytorch": "Training and development",
+                        "torchscript": "Production deployment (recommended)",
+                        "onnx": "Cross-platform inference"
+                    }
+                    metadata["deployment_recommendations"] = [
+                        "Use TorchScript (.pt) for production deployment",
+                        "Use ONNX (.onnx) for cross-platform compatibility",
+                        "Keep PyTorch state dict (.pth) for fine-tuning"
+                    ]
+                elif model_type == "shallow":
+                    metadata["export_formats"] = ["sklearn"]
+                    metadata["deployment_ready"] = True
+                    metadata["compatibility_info"] = {
+                        "sklearn": "Standard scikit-learn pickle format"
+                    }
+                    metadata["deployment_recommendations"] = [
+                        "Use pickle (.pkl) format for deployment",
+                        "Consider ONNX export for cross-platform deployment"
+                    ]
+                
+                # Extract performance metrics
+                if "best_validation_accuracy" in model_data:
+                    metadata["performance_metrics"]["validation_accuracy"] = model_data["best_validation_accuracy"]
+                if "training_duration" in model_data:
+                    metadata["performance_metrics"]["training_time_seconds"] = model_data["training_duration"]
+                
+                # Add model size information if available
+                if "model_parameters" in model_data:
+                    metadata["model_size_info"]["total_parameters"] = model_data["model_parameters"]
+                if "trainable_parameters" in model_data:
+                    metadata["model_size_info"]["trainable_parameters"] = model_data["trainable_parameters"]
+                
+                return metadata
+            
             # Helper function to select top models from each difficulty
             def select_top_models(models_df, max_count=3):
                 if len(models_df) == 0:
@@ -501,15 +554,30 @@ class ProductionPipeline:
                 
                 result = []
                 for _, model in sorted_models.iterrows():
-                    result.append({
+                    # Create enhanced model entry with comprehensive metadata
+                    model_data = model.to_dict()
+                    enhanced_metadata = get_model_metadata(model_data, model['model_type'])
+                    
+                    model_entry = {
                         "model_key": model['model_key'],
                         "name": f"{model['model_type']} - {model['variation']}",
                         "accuracy": float(model['best_validation_accuracy']),
                         "model_path": model.get('model_path', ''),
                         "version": model.get('version', 'unknown'),
                         "training_time": float(model.get('training_duration', 0)),
-                        "model_format": get_model_format(model['model_type'])
-                    })
+                        "model_format": get_model_format(model['model_type']),
+                        # Enhanced metadata
+                        "metadata": enhanced_metadata,
+                        "export_formats": enhanced_metadata["export_formats"],
+                        "deployment_ready": enhanced_metadata["deployment_ready"],
+                        "deployment_recommendations": enhanced_metadata["deployment_recommendations"]
+                    }
+                    
+                    # Add performance metrics at top level for backward compatibility
+                    if enhanced_metadata["performance_metrics"]:
+                        model_entry.update(enhanced_metadata["performance_metrics"])
+                    
+                    result.append(model_entry)
                 return result
             
             # Get class names for this dataset
@@ -697,6 +765,8 @@ def main():
                        help='Keep only N newest versions per model (0 = no cleanup)')
     parser.add_argument('--cleanup-logs-days', type=int, default=0,
                        help='Clean tuning logs older than N days (0 = no cleanup)')
+    parser.add_argument('--skip-cleanup', action='store_true',
+                       help='Skip all cleanup operations after training')
     
     args = parser.parse_args()
     
@@ -724,8 +794,8 @@ def main():
     print(f"Successful trainings: {results['successful_trainings']}")
     print(f"Failed trainings: {results['failed_trainings']}")
     
-    # Auto-cleanup if requested
-    if args.auto_cleanup or args.cleanup_old_versions > 0 or args.cleanup_logs_days > 0:
+    # Auto-cleanup if requested (and not skipped)
+    if not args.skip_cleanup and (args.auto_cleanup or args.cleanup_old_versions > 0 or args.cleanup_logs_days > 0):
         print(f"\n🧹 Running post-training cleanup...")
         try:
             import subprocess
@@ -744,12 +814,26 @@ def main():
                 if args.cleanup_logs_days > 0:
                     cmd.extend(["--tuning-logs", "--days", str(args.cleanup_logs_days)])
                 
-                # Run cleanup
-                result = subprocess.run(cmd, cwd=args.base_dir, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print("✅ Cleanup completed successfully")
-                else:
-                    print(f"⚠️  Cleanup completed with warnings: {result.stderr}")
+                # Run cleanup with timeout
+                try:
+                    result = subprocess.run(
+                        cmd, 
+                        cwd=args.base_dir, 
+                        capture_output=True, 
+                        text=True,
+                        timeout=120  # 120 second timeout (increased for production cleanup)
+                    )
+                    if result.returncode == 0:
+                        print("✅ Cleanup completed successfully")
+                    else:
+                        print(f"⚠️  Cleanup completed with warnings: {result.stderr}")
+                except subprocess.TimeoutExpired:
+                    print("⚠️  Cleanup timed out after 120 seconds - skipping")
+                    print("💡 Consider running cleanup manually later with: python models/production/scripts/cleanup_production.py")
+                except Exception as e:
+                    print(f"⚠️  Cleanup error: {e}")
+                    print(f"💡 Cleanup command was: {' '.join(cmd)}")
+                    print("💡 You can run cleanup manually later if needed")
             else:
                 print(f"⚠️  Cleanup script not found at {cleanup_script}")
                 

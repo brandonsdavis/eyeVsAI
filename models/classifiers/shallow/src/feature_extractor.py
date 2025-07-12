@@ -18,108 +18,124 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from typing import List, Optional, Tuple
 import gc
+import multiprocessing as mp
+from functools import partial
 
 
 class FeatureExtractor:
     """Extract features from images for shallow learning with batch processing."""
     
-    def __init__(self):
+    def __init__(self, n_jobs: int = -1):
         self.scaler = StandardScaler()
         self.pca = None
+        self.n_jobs = n_jobs if n_jobs != -1 else mp.cpu_count()
         
     def extract_basic_features_batch(self, images: List[np.ndarray]) -> np.ndarray:
         """Extract basic statistical features from a batch of images."""
-        features = []
+        if not images:
+            return np.array([])
+            
+        # Convert to numpy array for vectorized operations
+        imgs_array = np.array(images)  # Shape: (batch_size, height, width, 3)
+        batch_size = imgs_array.shape[0]
         
-        for img in images:
-            img_features = []
+        # Pre-allocate feature array (18 color features + 3 gray features + 3 edge features = 24)
+        features = np.zeros((batch_size, 24))
+        
+        # Vectorized color statistics for all images at once
+        for channel in range(3):
+            channel_data = imgs_array[:, :, :, channel].reshape(batch_size, -1)
+            start_idx = channel * 6
             
-            # Convert to grayscale for some features
-            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            
-            # Color statistics (RGB channels)
-            for channel in range(3):
-                channel_data = img[:, :, channel].flatten()
-                img_features.extend([
-                    np.mean(channel_data),
-                    np.std(channel_data),
-                    np.min(channel_data),
-                    np.max(channel_data),
-                    np.percentile(channel_data, 25),
-                    np.percentile(channel_data, 75)
-                ])
-            
-            # Grayscale statistics
-            gray_flat = gray.flatten()
-            img_features.extend([
-                np.mean(gray_flat),
-                np.std(gray_flat),
-                np.var(gray_flat)
+            features[:, start_idx:start_idx+6] = np.column_stack([
+                np.mean(channel_data, axis=1),
+                np.std(channel_data, axis=1),
+                np.min(channel_data, axis=1),
+                np.max(channel_data, axis=1),
+                np.percentile(channel_data, 25, axis=1),
+                np.percentile(channel_data, 75, axis=1)
             ])
-            
-            # Edge detection features
+        
+        # Vectorized grayscale conversion and statistics
+        gray_imgs = np.array([cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in images])
+        gray_flat = gray_imgs.reshape(batch_size, -1)
+        
+        features[:, 18:21] = np.column_stack([
+            np.mean(gray_flat, axis=1),
+            np.std(gray_flat, axis=1),
+            np.var(gray_flat, axis=1)
+        ])
+        
+        # Edge detection (still needs individual processing due to cv2.Canny)
+        for i, gray in enumerate(gray_imgs):
             edges = cv2.Canny(gray, 50, 150)
-            img_features.extend([
-                np.sum(edges > 0) / edges.size,  # Edge density
+            features[i, 21:24] = [
+                np.sum(edges > 0) / edges.size,
                 np.mean(edges),
                 np.std(edges)
-            ])
+            ]
             
-            features.append(img_features)
-            
-        return np.array(features)
+        return features
     
     def extract_histogram_features_batch(self, images: List[np.ndarray], bins: int = 16) -> np.ndarray:
         """Extract color histogram features from a batch of images."""
-        features = []
+        if not images:
+            return np.array([])
+            
+        batch_size = len(images)
+        features = np.zeros((batch_size, bins * 3))  # 3 channels * bins per channel
         
-        for img in images:
-            hist_features = []
+        # Vectorized histogram computation
+        imgs_array = np.array(images)
+        
+        for channel in range(3):
+            channel_data = imgs_array[:, :, :, channel]
             
-            # Histogram for each color channel
-            for channel in range(3):
-                hist, _ = np.histogram(img[:, :, channel], bins=bins, range=(0, 256))
-                hist = hist / np.sum(hist)  # Normalize
-                hist_features.extend(hist)
+            # Compute histograms for all images in the batch at once
+            for i in range(batch_size):
+                hist, _ = np.histogram(channel_data[i], bins=bins, range=(0, 256))
+                hist = hist / (np.sum(hist) + 1e-8)  # Normalize with small epsilon
+                start_idx = channel * bins
+                features[i, start_idx:start_idx+bins] = hist
                 
-            features.append(hist_features)
-            
-        return np.array(features)
+        return features
     
     def extract_texture_features_batch(self, images: List[np.ndarray]) -> np.ndarray:
         """Extract texture features from a batch of images."""
-        features = []
+        if not images:
+            return np.array([])
+            
+        batch_size = len(images)
+        features = np.zeros((batch_size, 5))  # 3 gradient + 2 local variance features
         
-        for img in images:
+        # Pre-compute kernel for local variance
+        kernel = np.ones((5, 5), np.float32) / 25
+        
+        for i, img in enumerate(images):
             gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             
-            # Simple texture measures
-            texture_features = []
-            
-            # Gradient magnitude
+            # Gradient magnitude computation
             grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
             grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
             gradient_mag = np.sqrt(grad_x**2 + grad_y**2)
             
-            texture_features.extend([
+            features[i, 0:3] = [
                 np.mean(gradient_mag),
                 np.std(gradient_mag),
                 np.percentile(gradient_mag, 90)
-            ])
+            ]
             
-            # Local variance
-            kernel = np.ones((5, 5), np.float32) / 25
-            local_mean = cv2.filter2D(gray.astype(np.float32), -1, kernel)
-            local_var = cv2.filter2D((gray.astype(np.float32) - local_mean)**2, -1, kernel)
+            # Local variance computation
+            gray_float = gray.astype(np.float32)
+            local_mean = cv2.filter2D(gray_float, -1, kernel)
+            local_var = cv2.filter2D((gray_float - local_mean)**2, -1, kernel)
             
-            texture_features.extend([
+            features[i, 3:5] = [
                 np.mean(local_var),
                 np.std(local_var)
-            ])
+            ]
             
-            features.append(texture_features)
-            
-        return np.array(features)
+        return features
     
     def extract_features_from_images(self, images: List[np.ndarray]) -> np.ndarray:
         """Extract all features from a list of images."""
@@ -133,28 +149,46 @@ class FeatureExtractor:
         
         return features
     
+    def _process_batch(self, batch_info):
+        """Process a single batch of images - for multiprocessing."""
+        batch_paths, load_func = batch_info
+        batch_images = load_func(batch_paths)
+        return self.extract_features_from_images(batch_images)
+    
     def extract_features_from_paths(self, image_paths: List[str], load_func, batch_size: int = 50) -> np.ndarray:
-        """Extract features from image paths using batch processing."""
-        all_features = []
+        """Extract features from image paths using batch processing with optional multiprocessing."""
         total_batches = (len(image_paths) + batch_size - 1) // batch_size
         
+        # Create batches
+        batches = []
         for i in range(0, len(image_paths), batch_size):
             batch_paths = image_paths[i:i+batch_size]
-            batch_num = i // batch_size + 1
-            
-            print(f"Processing batch {batch_num}/{total_batches} ({len(batch_paths)} images)")
-            
-            # Load batch of images using provided load function
-            batch_images = load_func(batch_paths)
-            
-            # Extract features for this batch
-            batch_features = self.extract_features_from_images(batch_images)
-            all_features.append(batch_features)
-            
-            # Clean up batch images from memory
-            del batch_images, batch_features
-            gc.collect()
-            
+            batches.append((batch_paths, load_func))
+        
+        print(f"Processing {total_batches} batches with {self.n_jobs} workers")
+        
+        # Use multiprocessing if more than 1 job and enough batches
+        if self.n_jobs > 1 and len(batches) > 1:
+            try:
+                with mp.Pool(processes=min(self.n_jobs, len(batches))) as pool:
+                    all_features = pool.map(self._process_batch, batches)
+            except Exception as e:
+                print(f"Multiprocessing failed ({e}), falling back to sequential processing")
+                all_features = []
+                for i, batch_info in enumerate(batches):
+                    print(f"Processing batch {i+1}/{total_batches}")
+                    batch_features = self._process_batch(batch_info)
+                    all_features.append(batch_features)
+                    gc.collect()
+        else:
+            # Sequential processing
+            all_features = []
+            for i, batch_info in enumerate(batches):
+                print(f"Processing batch {i+1}/{total_batches}")
+                batch_features = self._process_batch(batch_info)
+                all_features.append(batch_features)
+                gc.collect()
+        
         # Combine all batch features
         final_features = np.vstack(all_features)
         print(f"Feature extraction complete. Shape: {final_features.shape}")
